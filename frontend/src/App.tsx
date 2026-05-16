@@ -7,6 +7,7 @@ import { Contact } from './pages/public/Contact';
 import { SimplePublicPage } from './pages/public/SimplePublicPage';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
+import { ForgotPassword, ResetPassword, VerifyEmail } from './pages/auth/AuthRecovery';
 import { ClientDashboard } from './pages/client/ClientDashboard';
 import { ClientReports } from './pages/client/ClientReports';
 import { ClientTickets } from './pages/client/ClientTickets';
@@ -26,6 +27,7 @@ import {
   ClientTeamManagement,
   ClientTicketDetail
 } from './pages/client/ClientMorePages';
+import { ClientBilling, ClientSecuritySettings } from './pages/client/ClientEnterprisePages';
 
 export function App() {
   return (
@@ -42,6 +44,9 @@ export function App() {
 
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="verify-email" element={<VerifyEmail />} />
 
         <Route element={<ProtectedRoute roles={['CLIENT']} />}>
           <Route path="client" element={<DashboardLayout />}>
@@ -55,6 +60,8 @@ export function App() {
             <Route path="company" element={<ClientCompanyProfile />} />
             <Route path="team" element={<ClientTeamManagement />} />
             <Route path="subscription" element={<ClientSubscription />} />
+            <Route path="billing" element={<ClientBilling />} />
+            <Route path="security" element={<ClientSecuritySettings />} />
             <Route path="notifications" element={<ClientNotifications />} />
             <Route path="audit-logs" element={<ClientAuditLogs />} />
             <Route path="knowledge-base" element={<ClientKnowledgeBase />} />
