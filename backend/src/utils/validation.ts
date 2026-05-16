@@ -60,6 +60,12 @@ export const ticketSchemas = {
       priority: z.nativeEnum(TicketPriority).optional(),
       internalNotes: z.string().max(4000).optional()
     })
+  }),
+  comment: z.object({
+    params: z.object({ id: z.string().uuid() }),
+    body: z.object({
+      message: z.string().min(1).max(2000)
+    })
   })
 };
 
