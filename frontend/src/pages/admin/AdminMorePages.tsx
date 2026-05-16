@@ -99,6 +99,11 @@ export function AdminStaffManagement() {
     const { data } = await api.get('/admin/staff-assignments');
     setStaff(data);
   }
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await api.post('/admin/staff-profiles', Object.fromEntries(new FormData(event.currentTarget).entries()));
+    toast.success('HR profile saved');
+  }
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black flex items-center gap-2"><Users className="text-shield-glow" />Staff Management</h1>
@@ -111,8 +116,25 @@ export function AdminStaffManagement() {
         <select className="input" name="clientCompanyId"><option value="">No client scope</option>{clients.map((client: any) => <option key={client.id} value={client.id}>{client.name}</option>)}</select>
         <button className="btn-primary" type="submit">Assign</button>
       </form>
+      <form onSubmit={saveProfile} className="glass-card grid gap-3 p-4 md:grid-cols-5">
+        <input className="input" name="userId" placeholder="User ID" required />
+        <input className="input" name="jobTitle" placeholder="Job title, e.g. SOC Analyst L2" required />
+        <select className="input" name="department"><option>EXECUTIVE</option><option>SECURITY_LEADERSHIP</option><option>SOC</option><option>RED_TEAM</option><option>BLUE_TEAM</option><option>COMPLIANCE</option><option>CUSTOMER_SUCCESS</option><option>ENGINEERING</option><option>SALES_MARKETING</option></select>
+        <select className="input" name="level"><option>INTERN</option><option>JUNIOR</option><option>MID</option><option>SENIOR</option><option>LEAD</option><option>MANAGER</option><option>DIRECTOR</option><option>EXECUTIVE</option></select>
+        <select className="input" name="clearanceLevel"><option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select>
+        <select className="input" name="employmentStatus"><option>ACTIVE</option><option>CONTRACTOR</option><option>ON_LEAVE</option><option>SUSPENDED</option><option>TERMINATED</option></select>
+        <input className="input" name="certifications" placeholder="CEH, OSCP, CISSP" />
+        <input className="input" name="skills" placeholder="SIEM, DFIR, AppSec" />
+        <button className="btn-primary" type="submit">Save Profile</button>
+      </form>
       <DataTable headers={['Name', 'Email', 'Scope', 'Role', 'Permissions']}>
         {staff.map(item => <tr key={item.id}><td className="px-5 py-4 font-bold">{item.user?.name}</td><td className="px-5 py-4">{item.user?.email}</td><td className="px-5 py-4">{item.scope}</td><td className="px-5 py-4">{item.role}</td><td className="px-5 py-4">{item.permissions?.join(', ')}</td></tr>)}
+      </DataTable>
+      <DataTable headers={['Name', 'Title', 'Department', 'Level', 'Clearance']}>
+        {clients.length >= 0 && staff.filter(item => item.user?.staffProfile || item.staffProfile).map((item: any) => {
+          const profile = item.user?.staffProfile || item.staffProfile;
+          return <tr key={`profile-${item.id}`}><td className="px-5 py-4 font-bold">{item.user?.name}</td><td className="px-5 py-4">{profile?.jobTitle}</td><td className="px-5 py-4">{profile?.department}</td><td className="px-5 py-4">{profile?.level}</td><td className="px-5 py-4">{profile?.clearanceLevel}</td></tr>;
+        })}
       </DataTable>
     </div>
   );
