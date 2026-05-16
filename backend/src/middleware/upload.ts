@@ -18,3 +18,16 @@ export const reportUpload = multer({
     cb(null, true);
   }
 });
+
+export const evidenceUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9_.-]/g, '_')}`)
+  }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/webp', 'text/plain', 'application/json', 'application/pdf'];
+    if (!allowed.includes(file.mimetype)) return cb(new HttpError(400, 'Evidence must be an image, text, JSON, or PDF file'));
+    cb(null, true);
+  }
+});
