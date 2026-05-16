@@ -5,7 +5,7 @@ import { aiSecurityController } from '../controllers/ai-security.controller.js';
 import { enterpriseManagementController } from '../controllers/enterprise-management.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { params, requestSchemas, ticketSchemas } from '../utils/validation.js';
+import { adminWorkflowSchemas, params, requestSchemas, ticketSchemas } from '../utils/validation.js';
 
 export const clientRoutes = Router();
 
@@ -29,6 +29,6 @@ clientRoutes.get('/security-events', clientController.securityEvents);
 clientRoutes.get('/staff-assignments', aiSecurityController.clientStaff);
 clientRoutes.post('/staff-assignments', aiSecurityController.assignClientStaff);
 clientRoutes.get('/messages', enterpriseManagementController.clientMessages);
-clientRoutes.post('/messages', enterpriseManagementController.createClientMessage);
+clientRoutes.post('/messages', validate(adminWorkflowSchemas.message), enterpriseManagementController.createClientMessage);
 clientRoutes.get('/meetings', enterpriseManagementController.clientMeetings);
-clientRoutes.post('/meetings', enterpriseManagementController.createClientMeeting);
+clientRoutes.post('/meetings', validate(adminWorkflowSchemas.meeting), enterpriseManagementController.createClientMeeting);
