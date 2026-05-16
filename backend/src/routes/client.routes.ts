@@ -14,7 +14,12 @@ clientRoutes.get('/reports/:id', validate(params.id), clientController.reportDet
 clientRoutes.get('/tickets', clientController.tickets);
 clientRoutes.post('/tickets', validate(ticketSchemas.create), clientController.createTicket);
 clientRoutes.patch('/tickets/:id', validate(ticketSchemas.clientPatch), clientController.patchTicket);
+clientRoutes.post('/tickets/:id/comment', validate(ticketSchemas.comment), clientController.addTicketComment);
 clientRoutes.get('/requests', clientController.requests);
 clientRoutes.post('/requests', validate(requestSchemas.create), clientController.createRequest);
 clientRoutes.get('/security-score/history', clientController.scoreHistory);
 clientRoutes.get('/subscription', clientController.subscription);
+clientRoutes.get('/notifications', clientController.notifications);
+clientRoutes.get('/audit-logs', clientController.auditLogs);
+clientRoutes.get('/knowledge-base', clientController.knowledgeBase);
+clientRoutes.get('/company', clientController.company);
