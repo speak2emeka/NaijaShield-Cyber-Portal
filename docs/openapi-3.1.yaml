@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: NaijaShield Cyber Portal API
+  version: 1.0.0
+  summary: Enterprise cybersecurity SaaS API
+  description: Admin, client, billing, SIEM, and safe synthetic Attack Lab APIs.
+servers:
+  - url: http://localhost:5000/api
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Dashboard:
+      type: object
+      properties:
+        metrics: { type: object }
+        securityPosture: { type: object }
+        securityEvents: { type: object }
+        attackLab: { type: object }
+        systemHealth: { type: object }
+    SecurityEvent:
+      type: object
+      properties:
+        id: { type: string }
+        clientCompanyId: { type: [string, "null"] }
+        type: { type: string }
+        severity: { enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        source: { type: string }
+        message: { type: string }
+        metadata: { type: object }
+        correlationId: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+    AttackScenario:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        difficulty: { enum: [BEGINNER, INTERMEDIATE, ADVANCED] }
+        safetyNote: { type: string }
+    AttackRun:
+      type: object
+      properties:
+        id: { type: string }
+        scenarioId: { type: string }
+        clientCompanyId: { type: string }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: [string, "null"], format: date-time }
+        resultSummary: { type: object }
+    Subscription:
+      type: object
+      properties:
+        id: { type: string }
+        clientCompanyId: { type: string }
+        plan: { type: string }
+        status: { enum: [TRIAL, ACTIVE, PAST_DUE, CANCELLED] }
+        billingInterval: { enum: [monthly, annual] }
+        featureFlags: { type: object }
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        subscriptionId: { type: string }
+        amount: { type: integer }
+        currency: { type: string }
+        status: { enum: [DRAFT, OPEN, PAID, VOID, FAILED] }
+paths:
+  /admin/dashboard:
+    get:
+      tags: [Admin Dashboard]
+      summary: Executive dashboard aggregation
+      responses:
+        "200":
+          description: Dashboard payload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+  /admin/security-events:
+    get:
+      tags: [Mini-SIEM]
+      summary: Search all security events
+      parameters:
+        - { name: clientCompanyId, in: query, schema: { type: string } }
+        - { name: severity, in: query, schema: { enum: [LOW, MEDIUM, HIGH, CRITICAL] } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: source, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Paginated events with analytics
+  /admin/security-events/export.csv:
+    get:
+      tags: [Mini-SIEM]
+      summary: Export security events to CSV
+      responses:
+        "200": { description: CSV export }
+  /client/security-events:
+    get:
+      tags: [Mini-SIEM]
+      summary: Search current client security events
+      responses:
+        "200": { description: Paginated client-scoped events }
+  /internal/security-events:
+    post:
+      tags: [Mini-SIEM]
+      summary: Internal event ingestion
+      description: Protected by x-internal-token in production.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SecurityEvent" }
+      responses:
+        "201": { description: Event recorded }
+  /admin/attack-lab/scenarios:
+    get:
+      tags: [Attack Lab Admin]
+      summary: List safe synthetic scenarios
+      responses:
+        "200": { description: Scenario list }
+    post:
+      tags: [Attack Lab Admin]
+      summary: Create a safe synthetic scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AttackScenario" }
+      responses:
+        "201": { description: Scenario created }
+  /admin/attack-lab/scenarios/{id}:
+    patch:
+      tags: [Attack Lab Admin]
+      summary: Update a safe synthetic scenario
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Scenario updated }
+  /admin/attack-lab/runs:
+    get:
+      tags: [Attack Lab Admin]
+      summary: List all safe synthetic runs
+      responses:
+        "200": { description: Run list }
+  /admin/attack-lab/runs/{id}:
+    get:
+      tags: [Attack Lab Admin]
+      summary: Get run replay detail
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Run detail }
+  /admin/attack-lab/analytics:
+    get:
+      tags: [Attack Lab Admin]
+      summary: Attack Lab analytics
+      responses:
+        "200": { description: Analytics payload }
+  /billing/checkout:
+    post:
+      tags: [Billing]
+      summary: Create hosted checkout session
+      responses:
+        "200": { description: Checkout URL }
+  /billing/webhook:
+    post:
+      tags: [Billing]
+      summary: Billing provider webhook
+      security: []
+      responses:
+        "200": { description: Webhook accepted }
+  /billing/admin/subscriptions:
+    get:
+      tags: [Billing]
+      summary: Admin subscription list
+      responses:
+        "200": { description: Subscriptions }
+  /billing/admin/subscriptions/{id}/plan:
+    patch:
+      tags: [Billing]
+      summary: Change subscription plan
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Plan changed }
+  /billing/admin/subscriptions/{id}/status:
+    patch:
+      tags: [Billing]
+      summary: Change subscription status
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Status changed }
+  /billing/client/subscription:
+    get:
+      tags: [Billing]
+      summary: Client subscription and invoice detail
+      responses:
+        "200": { description: Client subscription }
