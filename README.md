@@ -9,6 +9,7 @@ GitHub repository: https://github.com/speak2emeka/NaijaShield-Cyber-Portal
 - Public marketing pages for services, pricing, resources, and contact
 - Client portal for dashboards, reports, tickets, requests, and account settings
 - Admin portal for clients, tickets, requests, audit logs, and platform metrics
+- Expanded portal modules for report/ticket detail pages, company profile, team management, subscription, notifications, audit logs, knowledge base, report upload, and staff management
 - Express API with JWT auth, refresh tokens, Prisma, PostgreSQL, Swagger UI, and security middleware
 - Frontend offline demo fallback so the portal can be inspected even when the backend database is not running
 
@@ -203,10 +204,15 @@ Client:
 - `GET /api/client/tickets`
 - `POST /api/client/tickets`
 - `PATCH /api/client/tickets/:id`
+- `POST /api/client/tickets/:id/comment`
 - `GET /api/client/requests`
 - `POST /api/client/requests`
 - `GET /api/client/security-score/history`
 - `GET /api/client/subscription`
+- `GET /api/client/notifications`
+- `GET /api/client/audit-logs`
+- `GET /api/client/knowledge-base`
+- `GET /api/client/company`
 
 Admin:
 
