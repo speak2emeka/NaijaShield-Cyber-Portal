@@ -42,7 +42,7 @@ export const clientController = {
   },
 
   async reportDetail(req: Request, res: Response) {
-    const report = assertFound(await prisma.report.findFirst({ where: { id: req.params.id, clientCompanyId: companyId(req) } }));
+    const report = assertFound(await prisma.report.findFirst({ where: { id: String(req.params.id), clientCompanyId: companyId(req) } }));
     res.json(report);
   },
 
@@ -63,7 +63,7 @@ export const clientController = {
   },
 
   async patchTicket(req: Request, res: Response) {
-    const ticket = assertFound(await prisma.ticket.findFirst({ where: { id: req.params.id, clientCompanyId: companyId(req) } }));
+    const ticket = assertFound(await prisma.ticket.findFirst({ where: { id: String(req.params.id), clientCompanyId: companyId(req) } }));
     const updated = await prisma.ticket.update({
       where: { id: ticket.id },
       data: {
@@ -76,6 +76,19 @@ export const clientController = {
     });
     await auditLog(req, 'ticket.client_update', 'Ticket', updated.id, { status: updated.status });
     res.json(updated);
+  },
+
+  async addTicketComment(req: Request, res: Response) {
+    const ticket = assertFound(await prisma.ticket.findFirst({ where: { id: String(req.params.id), clientCompanyId: companyId(req) } }));
+    const comment = await prisma.ticketComment.create({
+      data: {
+        ticketId: ticket.id,
+        userId: req.user!.id,
+        body: req.body.message
+      }
+    });
+    await auditLog(req, 'ticket.comment', 'Ticket', ticket.id, { commentId: comment.id });
+    res.status(201).json(comment);
   },
 
   async requests(req: Request, res: Response) {
@@ -96,5 +109,37 @@ export const clientController = {
 
   async subscription(req: Request, res: Response) {
     res.json(await prisma.subscription.findUnique({ where: { clientCompanyId: companyId(req) } }));
+  },
+
+  async notifications(req: Request, res: Response) {
+    res.json(await prisma.notification.findMany({
+      where: {
+        OR: [
+          { userId: req.user!.id },
+          { clientCompanyId: companyId(req) }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    }));
+  },
+
+  async auditLogs(req: Request, res: Response) {
+    res.json(await prisma.auditLog.findMany({
+      where: { userId: req.user!.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    }));
+  },
+
+  async knowledgeBase(_req: Request, res: Response) {
+    res.json(await prisma.knowledgeBaseArticle.findMany({ orderBy: [{ category: 'asc' }, { title: 'asc' }] }));
+  },
+
+  async company(req: Request, res: Response) {
+    res.json(assertFound(await prisma.clientCompany.findUnique({
+      where: { id: companyId(req) },
+      include: { users: { select: { id: true, name: true, email: true, role: true, createdAt: true } }, subscription: true }
+    })));
   }
 };
