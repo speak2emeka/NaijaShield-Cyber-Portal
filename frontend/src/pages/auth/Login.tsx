@@ -117,6 +117,12 @@ export function Login() {
             >
               Don't have an account? Create one
             </Link>
+            <Link 
+              to="/forgot-password" 
+              className="text-center text-xs font-bold text-slate-400 hover:text-shield-glow transition-colors"
+            >
+              Forgot password?
+            </Link>
           </div>
         </form>
       </div>
