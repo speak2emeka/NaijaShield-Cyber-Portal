@@ -81,6 +81,54 @@ enum InvoiceStatus {
   FAILED
 }
 
+enum SecuritySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AssetType {
+  DOMAIN
+  IP
+  APP
+  CLOUD
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ComplianceFramework {
+  ISO27001
+  SOC2
+  NDPR
+}
+
+enum ComplianceItemStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+}
+
+enum AttackDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AttackPhase {
+  RECON
+  INITIAL_ACCESS
+  LATERAL_MOVEMENT
+  EXFILTRATION
+  CONTAINMENT
+  RECOVERY
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -115,11 +163,18 @@ model ClientCompany {
   industry             String
   size                 String
   contactEmail         String
+  tenantKeyId          String?
+  keyRotationDueAt     DateTime?
   users                User[]
   reports              Report[]
   tickets              Ticket[]
   serviceRequests      ServiceRequest[]
   securityScoreHistory SecurityScoreHistory[]
+  securityPosture      SecurityPostureSummary?
+  securityEvents       SecurityEvent[]
+  assets               ClientAsset[]
+  complianceStatuses   ComplianceStatus[]
+  attackRuns           AttackRun[]
   subscription         Subscription?
   notifications        Notification[]
   createdAt            DateTime               @default(now())
@@ -127,6 +182,7 @@ model ClientCompany {
   deletedAt            DateTime?
 
   @@index([industry])
+  @@index([tenantKeyId])
   @@index([deletedAt])
 }
 
@@ -321,12 +377,18 @@ model UserSession {
   userAgent   String?
   ipAddress   String?
   deviceLabel String?
+  deviceFingerprint String?
+  country     String?
+  riskScore   Int       @default(0)
+  riskFlags   Json?
+  stepUpRequired Boolean @default(false)
   lastSeenAt  DateTime  @default(now())
   revokedAt   DateTime?
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
 
   @@index([userId, revokedAt])
+  @@index([riskScore])
 }
 
 model BackupCode {
@@ -365,4 +427,125 @@ model ContactMessage {
   subject   String
   message   String
   createdAt DateTime @default(now())
+}
+
+model SecurityEvent {
+  id              String           @id @default(uuid())
+  clientCompanyId String?
+  type            String
+  severity        SecuritySeverity @default(LOW)
+  source          String
+  message         String
+  metadata        Json?
+  correlationId   String?
+  clientCompany   ClientCompany?   @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+
+  @@index([clientCompanyId, createdAt])
+  @@index([type])
+  @@index([severity])
+  @@index([source])
+}
+
+model SecurityPostureSummary {
+  id               String        @id @default(uuid())
+  clientCompanyId  String        @unique
+  score            Int
+  lastCalculatedAt DateTime      @default(now())
+  breakdown        Json
+  clientCompany    ClientCompany @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+
+  @@index([score])
+  @@index([lastCalculatedAt])
+}
+
+model ClientAsset {
+  id              String        @id @default(uuid())
+  clientCompanyId String
+  type            AssetType
+  identifier      String
+  riskLevel       RiskLevel     @default(LOW)
+  lastSeenAt      DateTime      @default(now())
+  metadata        Json?
+  clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+
+  @@index([clientCompanyId, riskLevel])
+  @@index([type])
+  @@unique([clientCompanyId, identifier])
+}
+
+model ComplianceStatus {
+  id              String                 @id @default(uuid())
+  clientCompanyId String
+  framework       ComplianceFramework
+  status          ComplianceItemStatus   @default(NOT_STARTED)
+  score           Int                    @default(0)
+  checklist       Json
+  lastUpdatedAt   DateTime               @updatedAt
+  evidence        ComplianceEvidence[]
+  clientCompany   ClientCompany          @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+
+  @@unique([clientCompanyId, framework])
+  @@index([framework, status])
+}
+
+model ComplianceEvidence {
+  id                 String           @id @default(uuid())
+  complianceStatusId String
+  title              String
+  reportId           String?
+  fileUrl            String?
+  createdAt          DateTime         @default(now())
+  complianceStatus   ComplianceStatus @relation(fields: [complianceStatusId], references: [id], onDelete: Cascade)
+
+  @@index([complianceStatusId])
+}
+
+model AttackScenario {
+  id          String           @id @default(uuid())
+  title       String
+  description String
+  category    String
+  difficulty  AttackDifficulty @default(BEGINNER)
+  safetyNote  String
+  eventTemplate Json
+  attackerTemplate Json
+  defenderTemplate Json
+  runs        AttackRun[]
+  createdAt   DateTime         @default(now())
+
+  @@index([category])
+  @@index([difficulty])
+}
+
+model AttackRun {
+  id              String        @id @default(uuid())
+  scenarioId      String
+  clientCompanyId String
+  startedAt       DateTime      @default(now())
+  finishedAt      DateTime?
+  resultSummary   Json?
+  attackerView    Json?
+  defenderView    Json?
+  scenario        AttackScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  clientCompany   ClientCompany   @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  events          AttackEvent[]
+
+  @@index([clientCompanyId, startedAt])
+  @@index([scenarioId])
+}
+
+model AttackEvent {
+  id          String           @id @default(uuid())
+  attackRunId String
+  timestamp   DateTime         @default(now())
+  phase       AttackPhase
+  description String
+  severity    SecuritySeverity @default(LOW)
+  metadata    Json?
+  attackRun   AttackRun        @relation(fields: [attackRunId], references: [id], onDelete: Cascade)
+
+  @@index([attackRunId, timestamp])
+  @@index([phase])
+  @@index([severity])
 }
