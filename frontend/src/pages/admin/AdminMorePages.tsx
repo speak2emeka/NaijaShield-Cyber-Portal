@@ -88,13 +88,31 @@ export function AdminReportsUpload() {
 
 export function AdminStaffManagement() {
   const clients = useApiData<any[]>('/admin/clients', []);
-  const staff = [{ id: 'staff-1', name: 'NaijaShield Admin', email: 'admin@naijashield.ng', role: 'ADMIN' }, { id: 'staff-2', name: 'SOC Analyst', email: 'analyst@naijashield.ng', role: 'ANALYST' }];
+  const [staff, setStaff] = useState<any[]>([]);
+  useEffect(() => { api.get('/admin/staff-assignments').then(({ data }) => setStaff(data)); }, []);
+  async function assign(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    await api.post('/admin/staff-assignments', Object.fromEntries(new FormData(form).entries()));
+    toast.success('Staff role assigned');
+    form.reset();
+    const { data } = await api.get('/admin/staff-assignments');
+    setStaff(data);
+  }
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black flex items-center gap-2"><Users className="text-shield-glow" />Staff Management</h1>
       <div className="grid gap-4 md:grid-cols-2"><MetricCard label="Staff Roles" value={staff.length} /><MetricCard label="Managed Clients" value={clients.length} /></div>
-      <DataTable headers={['Name', 'Email', 'Role']}>
-        {staff.map(user => <tr key={user.id}><td className="px-5 py-4 font-bold">{user.name}</td><td className="px-5 py-4">{user.email}</td><td className="px-5 py-4">{user.role}</td></tr>)}
+      <form onSubmit={assign} className="glass-card grid gap-3 p-4 md:grid-cols-6">
+        <input className="input" name="name" placeholder="Name" required />
+        <input className="input" name="email" type="email" placeholder="Email" required />
+        <select className="input" name="scope"><option>ADMIN</option><option>CLIENT</option></select>
+        <select className="input" name="role"><option>ADMIN</option><option>ANALYST</option><option>SUPERVISOR</option><option>AUDITOR</option><option>CLIENT</option></select>
+        <select className="input" name="clientCompanyId"><option value="">No client scope</option>{clients.map((client: any) => <option key={client.id} value={client.id}>{client.name}</option>)}</select>
+        <button className="btn-primary" type="submit">Assign</button>
+      </form>
+      <DataTable headers={['Name', 'Email', 'Scope', 'Role', 'Permissions']}>
+        {staff.map(item => <tr key={item.id}><td className="px-5 py-4 font-bold">{item.user?.name}</td><td className="px-5 py-4">{item.user?.email}</td><td className="px-5 py-4">{item.scope}</td><td className="px-5 py-4">{item.role}</td><td className="px-5 py-4">{item.permissions?.join(', ')}</td></tr>)}
       </DataTable>
     </div>
   );
