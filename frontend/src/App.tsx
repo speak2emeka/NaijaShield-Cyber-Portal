@@ -28,6 +28,15 @@ import {
   ClientTicketDetail
 } from './pages/client/ClientMorePages';
 import { ClientBilling, ClientSecuritySettings } from './pages/client/ClientEnterprisePages';
+import {
+  ClientAttackLab,
+  ClientAttackRunDetail,
+  ClientAttackSurface,
+  ClientCompliance,
+  ClientSecurityEvents,
+  ClientSecurityPosture
+} from './pages/client/ClientSecurityPlatformPages';
+import { AdminAttackLabOverview, AdminSecurityEvents } from './pages/admin/AdminSecurityPlatformPages';
 
 export function App() {
   return (
@@ -62,6 +71,12 @@ export function App() {
             <Route path="subscription" element={<ClientSubscription />} />
             <Route path="billing" element={<ClientBilling />} />
             <Route path="security" element={<ClientSecuritySettings />} />
+            <Route path="security-posture" element={<ClientSecurityPosture />} />
+            <Route path="security-events" element={<ClientSecurityEvents />} />
+            <Route path="attack-surface" element={<ClientAttackSurface />} />
+            <Route path="compliance" element={<ClientCompliance />} />
+            <Route path="attack-lab" element={<ClientAttackLab />} />
+            <Route path="attack-lab/runs/:id" element={<ClientAttackRunDetail />} />
             <Route path="notifications" element={<ClientNotifications />} />
             <Route path="audit-logs" element={<ClientAuditLogs />} />
             <Route path="knowledge-base" element={<ClientKnowledgeBase />} />
@@ -80,6 +95,8 @@ export function App() {
             <Route path="audit-logs" element={<AdminAuditLogs />} />
             <Route path="reports-upload" element={<AdminReportsUpload />} />
             <Route path="staff" element={<AdminStaffManagement />} />
+            <Route path="security-events" element={<AdminSecurityEvents />} />
+            <Route path="attack-lab" element={<AdminAttackLabOverview />} />
           </Route>
         </Route>
       </Routes>
