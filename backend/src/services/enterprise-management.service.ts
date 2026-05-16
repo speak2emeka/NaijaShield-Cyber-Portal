@@ -11,6 +11,7 @@ import {
   StaffLevel
 } from '@prisma/client';
 import { prisma } from '../config/prisma.js';
+import { HttpError } from '../utils/http.js';
 
 function csv(value: unknown) {
   if (Array.isArray(value)) return value;
@@ -67,16 +68,26 @@ export const enterpriseManagementService = {
   },
 
   createShift(input: any) {
-    return prisma.staffShift.create({
-      data: {
-        userId: input.userId,
-        shiftType: input.shiftType as ShiftType,
-        startsAt: new Date(input.startsAt),
-        endsAt: new Date(input.endsAt),
-        onCall: Boolean(input.onCall),
-        attendanceStatus: input.attendanceStatus,
-        handoverNotes: input.handoverNotes
-      }
+    return prisma.$transaction(async tx => {
+      const overlap = await tx.staffShift.findFirst({
+        where: {
+          userId: input.userId,
+          startsAt: { lt: new Date(input.endsAt) },
+          endsAt: { gt: new Date(input.startsAt) }
+        }
+      });
+      if (overlap) throw new HttpError(409, 'Shift overlaps an existing assignment for this staff member');
+      return tx.staffShift.create({
+        data: {
+          userId: input.userId,
+          shiftType: input.shiftType as ShiftType,
+          startsAt: new Date(input.startsAt),
+          endsAt: new Date(input.endsAt),
+          onCall: Boolean(input.onCall),
+          attendanceStatus: input.attendanceStatus,
+          handoverNotes: input.handoverNotes
+        }
+      });
     });
   },
 
@@ -84,7 +95,8 @@ export const enterpriseManagementService = {
     return prisma.staffShift.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true } } }, orderBy: { startsAt: 'desc' }, take: 100 });
   },
 
-  createMeeting(input: any, organizerUserId?: string) {
+  async createMeeting(input: any, organizerUserId?: string) {
+    if (input.clientCompanyId) await prisma.clientCompany.findUniqueOrThrow({ where: { id: input.clientCompanyId } });
     return prisma.staffMeeting.create({
       data: {
         clientCompanyId: input.clientCompanyId || undefined,
