@@ -12,6 +12,8 @@ const clientLinks = [
   ['Company', '/client/company'],
   ['Team', '/client/team'],
   ['Subscription', '/client/subscription'],
+  ['Billing', '/client/billing'],
+  ['Security', '/client/security'],
   ['Notifications', '/client/notifications'],
   ['Audit Logs', '/client/audit-logs'],
   ['Knowledge Base', '/client/knowledge-base'],
