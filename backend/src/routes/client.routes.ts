@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { UserRole } from '@prisma/client';
 import { clientController } from '../controllers/client.controller.js';
+import { aiSecurityController } from '../controllers/ai-security.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { params, requestSchemas, ticketSchemas } from '../utils/validation.js';
@@ -23,3 +24,6 @@ clientRoutes.get('/notifications', clientController.notifications);
 clientRoutes.get('/audit-logs', clientController.auditLogs);
 clientRoutes.get('/knowledge-base', clientController.knowledgeBase);
 clientRoutes.get('/company', clientController.company);
+clientRoutes.get('/security-events', clientController.securityEvents);
+clientRoutes.get('/staff-assignments', aiSecurityController.clientStaff);
+clientRoutes.post('/staff-assignments', aiSecurityController.assignClientStaff);
