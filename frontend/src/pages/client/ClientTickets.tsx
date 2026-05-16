@@ -4,6 +4,7 @@ import { DataTable } from '../../components/DataTable';
 import { api } from '../../services/api';
 import { Ticket } from '../../types';
 import { AlertCircle, Ticket as TicketIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const priorityColors = {
   'LOW': 'badge-info',
@@ -141,7 +142,7 @@ export function ClientTickets() {
           <DataTable headers={['Title', 'Priority', 'Status', 'Updated']}>
             {tickets.map(ticket => (
               <tr key={ticket.id} className="hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 font-bold">{ticket.title}</td>
+                <td className="px-6 py-4 font-bold"><Link className="text-shield-glow hover:underline" to={`/client/tickets/${ticket.id}`}>{ticket.title}</Link></td>
                 <td className="px-6 py-4">
                   <span className={`badge ${priorityColors[ticket.priority as keyof typeof priorityColors] || 'badge-info'}`}>
                     {ticket.priority}
