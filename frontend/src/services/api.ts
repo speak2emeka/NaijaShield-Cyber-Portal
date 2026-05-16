@@ -204,7 +204,6 @@ const demoAiAttackSurface = {
 };
 
 const demoTestCases = {
-  safetyNote: 'Generated cases are validation plans only and contain no exploit payloads.',
   testCases: [
     { id: 'tc-1', objective: 'Validate report access authorization', severity: 'HIGH', preconditions: ['Approved scope', 'test account'], expectedBehavior: 'Unauthorized access is denied and logged.', indicatorsOfVulnerability: ['missing denial', 'missing audit log'] },
     { id: 'tc-2', objective: 'Validate session timeout controls', severity: 'MEDIUM', preconditions: ['test user'], expectedBehavior: 'Expired sessions require reauthentication.', indicatorsOfVulnerability: ['session remains valid too long'] }
