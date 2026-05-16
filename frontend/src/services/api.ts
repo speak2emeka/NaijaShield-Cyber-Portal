@@ -96,6 +96,44 @@ const demoReports: Report[] = [
   }
 ];
 
+const demoCompany = {
+  id: 'demo-company',
+  name: 'Lagos Fintech Group',
+  industry: 'Financial Services',
+  size: '250-500',
+  contactEmail: 'security@lagosfintech.test',
+  users: [{
+    id: demoUsers['client@example.com'].id,
+    email: demoUsers['client@example.com'].email,
+    name: demoUsers['client@example.com'].name,
+    role: demoUsers['client@example.com'].role,
+    clientCompanyId: demoUsers['client@example.com'].clientCompanyId
+  }],
+  subscription: {
+    plan: 'ShieldOps',
+    status: 'ACTIVE',
+    startDate: '2026-01-01T00:00:00.000Z',
+    renewalDate: '2026-12-31T00:00:00.000Z',
+    paymentHistory: [{ amount: 250000, currency: 'NGN', date: '2026-05-01', status: 'paid' }]
+  }
+};
+
+const demoNotifications = [
+  { id: 'note-1', type: 'ALERT', message: 'High-priority ticket opened for endpoint exposure review.', read: false, createdAt: now },
+  { id: 'note-2', type: 'REPORT', message: 'External Attack Surface Review is ready for download.', read: true, createdAt: now }
+];
+
+const demoAuditLogs = [
+  { id: 'audit-1', action: 'CLIENT_LOGIN', entityType: 'User', createdAt: now, user: { email: 'client@example.com' } },
+  { id: 'audit-2', action: 'TICKET_CREATED', entityType: 'Ticket', createdAt: now, user: { email: 'client@example.com' } }
+];
+
+const demoKnowledgeBase = [
+  { id: 'kb-1', title: 'How to report a suspected phishing email', category: 'Awareness', content: 'Preserve the email, avoid links or attachments, and open a ticket with full headers when possible.', createdAt: now },
+  { id: 'kb-2', title: 'Incident response first hour checklist', category: 'Incident Response', content: 'Contain affected accounts, preserve logs, identify impacted assets, and notify NaijaShield through the portal.', createdAt: now },
+  { id: 'kb-3', title: 'MFA rollout guidance', category: 'Identity Security', content: 'Prioritize privileged users, enforce strong factors, and monitor fallback methods.', createdAt: now }
+];
+
 function publicUser(user: User & { password: string }): User {
   const { password: _password, ...safeUser } = user;
   return safeUser;
@@ -156,13 +194,30 @@ function handleDemoRequest(config: any) {
       ],
       tickets: demoTickets,
       requests: demoRequests,
-      reports: demoReports
+      reports: demoReports,
+      subscription: demoCompany.subscription,
+      company: demoCompany
     });
   }
 
+  if (method === 'get' && url.startsWith('/client/reports/')) {
+    return demoResponse(config, demoReports.find(report => url.endsWith(report.id)) || demoReports[0]);
+  }
   if (method === 'get' && url === '/client/reports') return demoResponse(config, demoReports);
   if (method === 'get' && url === '/client/tickets') return demoResponse(config, demoTickets);
   if (method === 'get' && url === '/client/requests') return demoResponse(config, demoRequests);
+  if (method === 'get' && url === '/client/security-score/history') {
+    return demoResponse(config, [
+      { id: 'score-1', score: 68, calculatedAt: '2026-01-15T00:00:00.000Z', notes: 'Initial onboarding baseline.' },
+      { id: 'score-2', score: 73, calculatedAt: '2026-02-15T00:00:00.000Z', notes: 'EDR coverage improved.' },
+      { id: 'score-3', score: 84, calculatedAt: '2026-04-15T00:00:00.000Z', notes: 'Incident playbook completed.' }
+    ]);
+  }
+  if (method === 'get' && url === '/client/subscription') return demoResponse(config, demoCompany.subscription);
+  if (method === 'get' && url === '/client/company') return demoResponse(config, demoCompany);
+  if (method === 'get' && url === '/client/notifications') return demoResponse(config, demoNotifications);
+  if (method === 'get' && url === '/client/audit-logs') return demoResponse(config, demoAuditLogs);
+  if (method === 'get' && url === '/client/knowledge-base') return demoResponse(config, demoKnowledgeBase);
 
   if (method === 'post' && url === '/client/tickets') {
     demoTickets.unshift({
@@ -175,6 +230,10 @@ function handleDemoRequest(config: any) {
       updatedAt: now
     });
     return demoResponse(config, demoTickets[0], 201);
+  }
+
+  if (method === 'post' && url.includes('/client/tickets/') && url.endsWith('/comment')) {
+    return demoResponse(config, { id: crypto.randomUUID(), body: body.message, createdAt: now }, 201);
   }
 
   if (method === 'post' && url === '/client/requests') {
@@ -194,17 +253,22 @@ function handleDemoRequest(config: any) {
       metrics: { clients: 3, subscriptions: 2, openTickets: 5, pendingRequests: 4 },
       recentActivity: [
         { id: 'log-1', action: 'CLIENT_LOGIN', entityType: 'User', createdAt: now },
-        { id: 'log-2', action: 'REPORT_UPLOADED', entityType: 'Report', createdAt: now }
+        { id: 'log-2', action: 'REPORT_UPLOADED', entityType: 'Report', createdAt: now },
+        { id: 'log-3', action: 'HEALTH_CHECK_GREEN', entityType: 'Platform', createdAt: now }
       ]
     });
   }
 
   if (method === 'get' && url === '/admin/clients') {
     return demoResponse(config, [
-      { id: 'company-1', name: 'Lagos Fintech Group', industry: 'Financial Services', users: [demoUsers['client@example.com']], subscription: { plan: 'ShieldOps' } },
+      { ...demoCompany, id: 'company-1' },
       { id: 'company-2', name: 'Abuja Health Network', industry: 'Healthcare', users: [], subscription: { plan: 'ShieldEnterprise' } }
     ]);
   }
+
+  if (method === 'get' && url.startsWith('/admin/clients/') && url.endsWith('/reports')) return demoResponse(config, demoReports);
+  if (method === 'get' && url.startsWith('/admin/clients/')) return demoResponse(config, { ...demoCompany, id: url.split('/')[3], reports: demoReports, tickets: demoTickets, serviceRequests: demoRequests });
+  if (method === 'post' && url.includes('/admin/clients/') && url.endsWith('/reports')) return demoResponse(config, demoReports[0], 201);
 
   if (method === 'get' && url === '/admin/tickets') {
     return demoResponse(config, demoTickets.map(ticket => ({ ...ticket, clientCompany: { name: 'Lagos Fintech Group' } })));
