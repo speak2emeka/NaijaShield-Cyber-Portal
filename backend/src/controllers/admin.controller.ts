@@ -5,17 +5,13 @@ import { auditLog } from '../middleware/audit.js';
 import { assertFound } from '../utils/http.js';
 import { paged, pagination } from '../utils/pagination.js';
 import { uploadReportObject } from '../services/storage.service.js';
+import { adminDashboardSummary } from '../services/admin-dashboard.service.js';
+import { searchSecurityEvents } from '../services/security-events.service.js';
+import { attackLabService } from '../services/attack-lab.service.js';
 
 export const adminController = {
   async dashboard(_req: Request, res: Response) {
-    const [clients, subscriptions, openTickets, pendingRequests, recentActivity] = await Promise.all([
-      prisma.clientCompany.count(),
-      prisma.subscription.count({ where: { status: 'ACTIVE' } }),
-      prisma.ticket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
-      prisma.serviceRequest.count({ where: { status: 'PENDING' } }),
-      prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 20, include: { user: { select: { name: true, email: true } } } })
-    ]);
-    res.json({ metrics: { clients, subscriptions, openTickets, pendingRequests }, recentActivity });
+    res.json(await adminDashboardSummary());
   },
 
   async clients(_req: Request, res: Response) {
@@ -146,5 +142,73 @@ export const adminController = {
       take: page.take
     }), prisma.auditLog.count({ where })]);
     res.json(paged(items, total, page.page, page.pageSize));
+  },
+
+  async securityEvents(req: Request, res: Response) {
+    const page = pagination(req);
+    res.json(await searchSecurityEvents({
+      clientCompanyId: req.query.clientCompanyId as string | undefined,
+      type: req.query.type as string | undefined,
+      severity: req.query.severity as never,
+      source: req.query.source as string | undefined,
+      search: req.query.search as string | undefined,
+      from: req.query.from ? new Date(String(req.query.from)) : undefined,
+      to: req.query.to ? new Date(String(req.query.to)) : undefined,
+      ...page
+    }));
+  },
+
+  async securityEventsCsv(req: Request, res: Response) {
+    const data = await searchSecurityEvents({
+      clientCompanyId: req.query.clientCompanyId as string | undefined,
+      type: req.query.type as string | undefined,
+      severity: req.query.severity as never,
+      source: req.query.source as string | undefined,
+      search: req.query.search as string | undefined,
+      from: req.query.from ? new Date(String(req.query.from)) : undefined,
+      to: req.query.to ? new Date(String(req.query.to)) : undefined,
+      page: 1,
+      pageSize: 1000,
+      skip: 0,
+      take: 1000
+    });
+    const rows = ['createdAt,client,type,severity,source,message,correlationId'];
+    for (const event of data.items) rows.push([event.createdAt.toISOString(), event.clientCompany?.name || '', event.type, event.severity, event.source, JSON.stringify(event.message), event.correlationId || ''].join(','));
+    res.setHeader('content-type', 'text/csv');
+    res.setHeader('content-disposition', 'attachment; filename="security-events.csv"');
+    res.send(rows.join('\n'));
+  },
+
+  async attackScenarios(_req: Request, res: Response) {
+    res.json(await attackLabService.scenarios());
+  },
+
+  async createAttackScenario(req: Request, res: Response) {
+    res.status(201).json(await attackLabService.createScenario(req.body));
+  },
+
+  async updateAttackScenario(req: Request, res: Response) {
+    res.json(await attackLabService.updateScenario(String(req.params.id), req.body));
+  },
+
+  async deleteAttackScenario(req: Request, res: Response) {
+    await attackLabService.deleteScenario(String(req.params.id));
+    res.status(204).send();
+  },
+
+  async attackRuns(req: Request, res: Response) {
+    res.json(await attackLabService.allRuns({ scenarioId: req.query.scenarioId as string | undefined, clientCompanyId: req.query.clientCompanyId as string | undefined }));
+  },
+
+  async startAttackRun(req: Request, res: Response) {
+    res.status(201).json(await attackLabService.startRun(req.body.clientCompanyId, req.body.scenarioId));
+  },
+
+  async attackRunDetail(req: Request, res: Response) {
+    res.json(await attackLabService.adminRunDetail(String(req.params.id)));
+  },
+
+  async attackAnalytics(_req: Request, res: Response) {
+    res.json(await attackLabService.analytics());
   }
 };
