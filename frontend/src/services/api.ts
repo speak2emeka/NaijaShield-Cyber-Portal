@@ -7,6 +7,7 @@ export const api = axios.create({
   timeout: 1500
 });
 
+const demoModeEnabled = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true';
 let accessToken: string | null = localStorage.getItem('ns_access_token');
 
 export function setAccessToken(token: string | null) {
@@ -525,7 +526,7 @@ api.interceptors.response.use(
   },
   async error => {
     const original = error.config;
-    if (!error.response) {
+    if (demoModeEnabled && !error.response) {
       const demo = handleDemoRequest(original);
       if (demo) return demo;
     }
