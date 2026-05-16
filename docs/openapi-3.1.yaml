@@ -205,3 +205,194 @@ paths:
       summary: Client subscription and invoice detail
       responses:
         "200": { description: Client subscription }
+  /admin/ai/threat-model:
+    post:
+      tags: [AI Security Testing]
+      summary: Generate STRIDE-style threat model
+      responses:
+        "200": { description: Threat model JSON }
+  /admin/ai/attack-surface/analyze:
+    post:
+      tags: [AI Security Testing]
+      summary: Analyze declared assets and passive exposure metadata
+      responses:
+        "200": { description: Attack surface analysis }
+  /admin/ai/test-cases/generate:
+    post:
+      tags: [AI Security Testing]
+      summary: Generate safe validation test cases without exploit payloads
+      responses:
+        "200": { description: Test case library }
+  /admin/ai/vuln/analyze:
+    post:
+      tags: [AI Security Testing]
+      summary: Analyze logs, scan outputs, and evidence into vulnerability guidance
+      responses:
+        "200": { description: Vulnerability analysis }
+  /admin/ai/report/generate:
+    post:
+      tags: [AI Security Testing]
+      summary: Generate pentest report draft JSON with PDF export stub
+      responses:
+        "200": { description: Report draft }
+  /admin/scans/run:
+    post:
+      tags: [Security Scans]
+      summary: Queue scanner dry-run orchestration
+      responses:
+        "201": { description: Scan run created }
+  /admin/scans/results:
+    get:
+      tags: [Security Scans]
+      summary: List scan orchestration results
+      responses:
+        "200": { description: Scan runs }
+  /admin/ci/security-results:
+    post:
+      tags: [CI Security]
+      summary: Submit CI pipeline security findings
+      responses:
+        "201": { description: CI result accepted }
+  /admin/ci/security-summary:
+    get:
+      tags: [CI Security]
+      summary: List CI security summaries and policy scores
+      responses:
+        "200": { description: CI summaries }
+  /admin/evidence:
+    get:
+      tags: [Evidence]
+      summary: List evidence workspace items
+      responses:
+        "200": { description: Evidence list }
+  /admin/evidence/upload:
+    post:
+      tags: [Evidence]
+      summary: Upload or create evidence item
+      responses:
+        "201": { description: Evidence saved }
+  /admin/evidence/{id}:
+    get:
+      tags: [Evidence]
+      summary: Get evidence detail
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Evidence detail }
+  /admin/staff-assignments:
+    get:
+      tags: [Staff]
+      summary: List admin and client scoped staff assignments
+      responses:
+        "200": { description: Staff assignments }
+    post:
+      tags: [Staff]
+      summary: Assign staff role and permissions
+      responses:
+        "201": { description: Staff assignment }
+  /admin/management/overview:
+    get:
+      tags: [Enterprise Management]
+      summary: Management overview for staff, CSR, SOC, pentest, and meetings
+      responses:
+        "200": { description: Management overview }
+  /admin/staff-directory:
+    get:
+      tags: [Enterprise Management]
+      summary: Staff directory with HR profiles
+      responses:
+        "200": { description: Staff directory }
+  /admin/staff-profiles:
+    post:
+      tags: [Enterprise Management]
+      summary: Create or update HR-style staff profile
+      responses:
+        "201": { description: Staff profile saved }
+  /admin/shifts:
+    get:
+      tags: [Enterprise Management]
+      summary: List shifts and handover logs
+      responses:
+        "200": { description: Staff shifts }
+    post:
+      tags: [Enterprise Management]
+      summary: Schedule staff shift or on-call coverage
+      responses:
+        "201": { description: Shift created }
+  /admin/meetings:
+    get:
+      tags: [Enterprise Management]
+      summary: List admin/client meetings
+      responses:
+        "200": { description: Meetings }
+    post:
+      tags: [Enterprise Management]
+      summary: Schedule a meeting
+      responses:
+        "201": { description: Meeting created }
+  /admin/csr:
+    get:
+      tags: [Customer Success]
+      summary: List customer success health records
+      responses:
+        "200": { description: CSR records }
+    post:
+      tags: [Customer Success]
+      summary: Update client health, onboarding, SLA, QBR, and renewal record
+      responses:
+        "201": { description: CSR record saved }
+  /admin/messages:
+    get:
+      tags: [Customer Success]
+      summary: List client messages
+      responses:
+        "200": { description: Messages }
+    post:
+      tags: [Customer Success]
+      summary: Send secure client message
+      responses:
+        "201": { description: Message sent }
+  /admin/soc/incidents:
+    get:
+      tags: [SOC Operations]
+      summary: List SOC incidents by workflow state
+      responses:
+        "200": { description: SOC incidents }
+    post:
+      tags: [SOC Operations]
+      summary: Create SOC incident with timeline and playbook
+      responses:
+        "201": { description: SOC incident created }
+  /admin/pentests:
+    get:
+      tags: [Pentest Operations]
+      summary: List pentest projects
+      responses:
+        "200": { description: Pentest projects }
+    post:
+      tags: [Pentest Operations]
+      summary: Create authorized pentest project scope and plan
+      responses:
+        "201": { description: Pentest project created }
+  /client/messages:
+    get:
+      tags: [Client Collaboration]
+      summary: List client messages
+      responses:
+        "200": { description: Client messages }
+    post:
+      tags: [Client Collaboration]
+      summary: Send client portal message
+      responses:
+        "201": { description: Message sent }
+  /client/meetings:
+    get:
+      tags: [Client Collaboration]
+      summary: List client meetings
+      responses:
+        "200": { description: Client meetings }
+    post:
+      tags: [Client Collaboration]
+      summary: Request or schedule client meeting
+      responses:
+        "201": { description: Meeting created }
