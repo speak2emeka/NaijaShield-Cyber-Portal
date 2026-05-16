@@ -38,7 +38,7 @@ const adminLinks = [
   ['CSR', '/admin/csr'],
   ['SOC Ops', '/admin/soc'],
   ['Pentest', '/admin/pentest'],
-  ['AI Assistant', '/admin/ai-assistant'],
+  ['AI Security Assistant', '/admin/ai-assistant'],
   ['Threat Models', '/admin/threat-models'],
   ['Attack Surface', '/admin/attack-surface'],
   ['Test Cases', '/admin/test-cases'],
