@@ -64,7 +64,7 @@ export const aiSecurityService = {
       severity: index < 2 ? 'HIGH' : 'MEDIUM',
       impactNotes: 'Business impact should be validated with asset owner before reporting.'
     }));
-    const output = { testCases, safetyNote: 'Generated cases are validation plans only and contain no exploit payloads.' };
+    const output = { testCases };
     await artifact(AiArtifactType.TEST_CASES, 'AI-assisted test cases', input, output, userId, input.clientCompanyId);
     return output;
   },
