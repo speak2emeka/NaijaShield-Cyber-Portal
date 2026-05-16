@@ -99,12 +99,29 @@ export function ClientCompanyProfile() {
 
 export function ClientTeamManagement() {
   const { data: company } = useApiData<any>('/client/company', { users: [] });
+  const { data: assignments } = useApiData<any[]>('/client/staff-assignments', []);
+  async function invite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    await api.post('/client/staff-assignments', Object.fromEntries(new FormData(form).entries()));
+    toast.success('Client team member added');
+    form.reset();
+  }
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black flex items-center gap-2"><Users className="text-shield-glow" />Team Management</h1>
+      <form onSubmit={invite} className="glass-card grid gap-3 p-4 md:grid-cols-4">
+        <input className="input" name="name" placeholder="Name" required />
+        <input className="input" name="email" type="email" placeholder="Email" required />
+        <input className="input" name="permissions" placeholder="permissions comma separated" />
+        <button className="btn-primary" type="submit">Add Member</button>
+      </form>
       <DataTable headers={['Name', 'Email', 'Role']}>
         {company.users.map((user: any) => (
           <tr key={user.id}><td className="px-5 py-4 font-bold">{user.name}</td><td className="px-5 py-4">{user.email}</td><td className="px-5 py-4">{user.role}</td></tr>
+        ))}
+        {assignments.map((item: any) => (
+          <tr key={item.id}><td className="px-5 py-4 font-bold">{item.user?.name}</td><td className="px-5 py-4">{item.user?.email}</td><td className="px-5 py-4">{item.permissions?.join(', ') || item.role}</td></tr>
         ))}
       </DataTable>
     </div>
