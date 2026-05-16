@@ -1,0 +1,100 @@
+import { Request, Response } from 'express';
+import { prisma } from '../config/prisma.js';
+import { auditLog } from '../middleware/audit.js';
+import { assertFound, HttpError } from '../utils/http.js';
+
+function companyId(req: Request) {
+  if (!req.user?.clientCompanyId) throw new HttpError(403, 'Client company required');
+  return req.user.clientCompanyId;
+}
+
+export const clientController = {
+  async dashboard(req: Request, res: Response) {
+    const clientCompanyId = companyId(req);
+    const [company, tickets, requests, reports, scores, subscription] = await Promise.all([
+      prisma.clientCompany.findUnique({ where: { id: clientCompanyId } }),
+      prisma.ticket.findMany({ where: { clientCompanyId }, orderBy: { updatedAt: 'desc' }, take: 5 }),
+      prisma.serviceRequest.findMany({ where: { clientCompanyId }, orderBy: { updatedAt: 'desc' }, take: 5 }),
+      prisma.report.findMany({ where: { clientCompanyId }, orderBy: { createdAt: 'desc' }, take: 5 }),
+      prisma.securityScoreHistory.findMany({ where: { clientCompanyId }, orderBy: { calculatedAt: 'asc' } }),
+      prisma.subscription.findUnique({ where: { clientCompanyId } })
+    ]);
+
+    const latestScore = scores.at(-1)?.score ?? 0;
+    res.json({
+      company,
+      metrics: {
+        securityScore: latestScore,
+        openTickets: tickets.filter(ticket => ticket.status !== 'CLOSED').length,
+        activeRequests: requests.filter(request => !['COMPLETED', 'CANCELLED'].includes(request.status)).length,
+        reports: reports.length
+      },
+      tickets,
+      requests,
+      reports,
+      scores,
+      subscription
+    });
+  },
+
+  async reports(req: Request, res: Response) {
+    res.json(await prisma.report.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { createdAt: 'desc' } }));
+  },
+
+  async reportDetail(req: Request, res: Response) {
+    const report = assertFound(await prisma.report.findFirst({ where: { id: req.params.id, clientCompanyId: companyId(req) } }));
+    res.json(report);
+  },
+
+  async tickets(req: Request, res: Response) {
+    res.json(await prisma.ticket.findMany({ where: { clientCompanyId: companyId(req) }, include: { comments: true }, orderBy: { updatedAt: 'desc' } }));
+  },
+
+  async createTicket(req: Request, res: Response) {
+    const ticket = await prisma.ticket.create({
+      data: {
+        ...req.body,
+        clientCompanyId: companyId(req),
+        createdByUserId: req.user!.id
+      }
+    });
+    await auditLog(req, 'ticket.create', 'Ticket', ticket.id, { title: ticket.title });
+    res.status(201).json(ticket);
+  },
+
+  async patchTicket(req: Request, res: Response) {
+    const ticket = assertFound(await prisma.ticket.findFirst({ where: { id: req.params.id, clientCompanyId: companyId(req) } }));
+    const updated = await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: req.body.status ?? ticket.status,
+        comments: req.body.comment
+          ? { create: { body: req.body.comment, userId: req.user!.id } }
+          : undefined
+      },
+      include: { comments: true }
+    });
+    await auditLog(req, 'ticket.client_update', 'Ticket', updated.id, { status: updated.status });
+    res.json(updated);
+  },
+
+  async requests(req: Request, res: Response) {
+    res.json(await prisma.serviceRequest.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { updatedAt: 'desc' } }));
+  },
+
+  async createRequest(req: Request, res: Response) {
+    const request = await prisma.serviceRequest.create({
+      data: { ...req.body, clientCompanyId: companyId(req) }
+    });
+    await auditLog(req, 'service_request.create', 'ServiceRequest', request.id, { type: request.type });
+    res.status(201).json(request);
+  },
+
+  async scoreHistory(req: Request, res: Response) {
+    res.json(await prisma.securityScoreHistory.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { calculatedAt: 'asc' } }));
+  },
+
+  async subscription(req: Request, res: Response) {
+    res.json(await prisma.subscription.findUnique({ where: { clientCompanyId: companyId(req) } }));
+  }
+};
