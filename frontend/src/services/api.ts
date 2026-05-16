@@ -134,6 +134,12 @@ const demoKnowledgeBase = [
   { id: 'kb-3', title: 'MFA rollout guidance', category: 'Identity Security', content: 'Prioritize privileged users, enforce strong factors, and monitor fallback methods.', createdAt: now }
 ];
 
+const demoPlans = [
+  { id: 'basic', name: 'Basic', priceMonthly: 150000, features: ['Portal access', 'Ticket support', 'Quarterly reports'] },
+  { id: 'pro', name: 'Pro', priceMonthly: 350000, features: ['Managed triage', 'Monthly reports', 'Security score tracking'] },
+  { id: 'enterprise', name: 'Enterprise', priceMonthly: 900000, features: ['Dedicated analyst', 'SSO', 'Custom SLAs'] }
+];
+
 function publicUser(user: User & { password: string }): User {
   const { password: _password, ...safeUser } = user;
   return safeUser;
@@ -182,6 +188,17 @@ function handleDemoRequest(config: any) {
     const user = demoSessionUser();
     return user ? demoResponse(config, { accessToken: 'demo-access-token' }) : null;
   }
+
+  if (method === 'post' && url.startsWith('/enterprise/auth/')) return demoResponse(config, { ok: true });
+  if (method === 'get' && url === '/enterprise/sso/config') return demoResponse(config, { providers: ['azure-ad', 'google-workspace', 'okta'], status: 'configuration-required' });
+  if (method === 'post' && url === '/enterprise/mfa/totp/setup') return demoResponse(config, { secret: 'JBSWY3DPEHPK3PXP', otpauthUrl: 'otpauth://totp/NaijaShield:demo' });
+  if (method === 'post' && url === '/enterprise/mfa/totp/verify') return demoResponse(config, { ok: true });
+  if (method === 'get' && url === '/enterprise/sessions') return demoResponse(config, [{ id: 'session-1', deviceLabel: 'Current browser', ipAddress: '127.0.0.1', lastSeenAt: now }]);
+  if (method === 'get' && url === '/enterprise/permissions') return demoResponse(config, { CLIENT: ['client:read', 'ticket:create'], ADMIN: ['*'], ANALYST: ['ticket:read', 'report:create'] });
+  if (method === 'get' && url === '/enterprise/billing/plans') return demoResponse(config, demoPlans);
+  if (method === 'post' && url === '/enterprise/billing/checkout') return demoResponse(config, { provider: body.provider || 'STRIPE', checkoutUrl: `${location.origin}/client/billing?demoCheckout=${body.planId}` });
+  if (method === 'get' && url === '/enterprise/billing/invoices') return demoResponse(config, [{ id: 'invoice-1', amount: 250000, currency: 'NGN', status: 'PAID', createdAt: now }]);
+  if (method === 'get' && url.includes('/enterprise/reports/') && url.endsWith('/signed-url')) return demoResponse(config, { url: '#', checksum: 'demo-checksum' });
 
   if (method === 'get' && url === '/client/dashboard') {
     return demoResponse(config, {
@@ -291,7 +308,12 @@ function handleDemoRequest(config: any) {
 }
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    if (response.data && Array.isArray(response.data.items)) {
+      return { ...response, data: response.data.items };
+    }
+    return response;
+  },
   async error => {
     const original = error.config;
     if (!error.response) {
