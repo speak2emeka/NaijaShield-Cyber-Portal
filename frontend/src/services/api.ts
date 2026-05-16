@@ -141,6 +141,11 @@ const demoPlans = [
   { id: 'enterprise', name: 'Enterprise', priceMonthly: 900000, features: ['Dedicated analyst', 'SSO', 'Custom SLAs'] }
 ];
 
+const demoSubscriptions = [
+  { id: 'sub-1', plan: 'pro', status: 'ACTIVE', billingInterval: 'monthly', renewalDate: '2026-12-31T00:00:00.000Z', clientCompany: { name: 'Lagos Fintech Group' }, invoices: [{ id: 'invoice-1', amount: 250000, currency: 'NGN', status: 'PAID', createdAt: now }] },
+  { id: 'sub-2', plan: 'enterprise', status: 'TRIAL', billingInterval: 'annual', renewalDate: '2026-08-15T00:00:00.000Z', clientCompany: { name: 'Abuja Health Network' }, invoices: [] }
+];
+
 const demoSecurityEvents = [
   { id: 'sec-1', type: 'NEW_DEVICE_LOGIN', severity: 'MEDIUM', source: 'auth', message: 'New browser session observed for client administrator.', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, metadata: { riskScore: 42, simulated: true } },
   { id: 'sec-2', type: 'REPORT_DOWNLOAD_STEP_UP', severity: 'LOW', source: 'reporting', message: 'Step-up authentication required before report download.', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, metadata: { action: 'download-report' } },
@@ -182,6 +187,46 @@ const demoAttackRuns: any[] = [
       { id: 'ae-3', phase: 'CONTAINMENT', severity: 'LOW', description: 'Containment and communication actions marked complete.', timestamp: now }
     ]
   }
+];
+
+const demoAiThreatModel = {
+  threats: [
+    { id: 'tm-1', category: 'Spoofing', component: 'Customer portal', risk: 78, suggestedTestAreas: ['MFA', 'session handling'] },
+    { id: 'tm-2', category: 'Information Disclosure', component: 'Reports API', risk: 82, suggestedTestAreas: ['authorization', 'signed URLs'] }
+  ],
+  attackPaths: [{ id: 'path-1', name: 'Identity to report access', steps: ['Login', 'Client context', 'Reports API'], risk: 'HIGH' }],
+  riskSummary: { score: 80, methodology: 'STRIDE-assisted review' }
+};
+
+const demoAiAttackSurface = {
+  assets: demoAssets.map(asset => ({ ...asset, classification: 'declared asset', exposurePoints: ['TLS review', 'auth surface'], suggestedReconSteps: ['confirm ownership', 'review passive metadata'] })),
+  summary: { highRiskComponents: 1, note: 'Passive and declared-asset analysis only.' }
+};
+
+const demoTestCases = {
+  safetyNote: 'Generated cases are validation plans only and contain no exploit payloads.',
+  testCases: [
+    { id: 'tc-1', objective: 'Validate report access authorization', severity: 'HIGH', preconditions: ['Approved scope', 'test account'], expectedBehavior: 'Unauthorized access is denied and logged.', indicatorsOfVulnerability: ['missing denial', 'missing audit log'] },
+    { id: 'tc-2', objective: 'Validate session timeout controls', severity: 'MEDIUM', preconditions: ['test user'], expectedBehavior: 'Expired sessions require reauthentication.', indicatorsOfVulnerability: ['session remains valid too long'] }
+  ]
+};
+
+const demoScanRuns = [
+  { id: 'scan-1', tool: 'ZAP', target: 'https://portal.demo', status: 'COMPLETED', createdAt: now, summary: { stubbed: true, counts: { informational: 3, low: 2, medium: 1, high: 0, critical: 0 } }, clientCompany: { name: 'Lagos Fintech Group' } },
+  { id: 'scan-2', tool: 'SEMGREP', target: 'github.com/demo/repo', status: 'COMPLETED', createdAt: now, summary: { stubbed: true, counts: { informational: 4, low: 1, medium: 0, high: 0, critical: 0 } }, clientCompany: { name: 'Lagos Fintech Group' } }
+];
+
+const demoCiResults = [
+  { id: 'ci-1', repository: 'NaijaShield-Cyber-Portal', branch: 'main', score: 86, status: 'PASS', createdAt: now, summary: { critical: 0, high: 0, total: 3 }, clientCompany: { name: 'Lagos Fintech Group' } }
+];
+
+const demoEvidence = [
+  { id: 'ev-work-1', title: 'Auth log sample', type: 'LOG', tags: ['auth', 'evidence'], findingRef: 'NS-001', createdAt: now, summary: { text: 'Evidence is ready for analyst review.' }, clientCompany: { name: 'Lagos Fintech Group' } }
+];
+
+const demoStaffAssignments = [
+  { id: 'assign-1', scope: 'ADMIN', role: 'ANALYST', permissions: ['siem:read', 'reports:write'], user: { name: 'SOC Analyst', email: 'analyst@naijashield.ng', role: 'ANALYST' } },
+  { id: 'assign-2', scope: 'CLIENT', role: 'CLIENT', permissions: ['client:tickets', 'client:reports'], user: { name: 'Client Manager', email: 'manager@example.com', role: 'CLIENT' }, clientCompany: { name: 'Lagos Fintech Group' } }
 ];
 
 function publicUser(user: User & { password: string }): User {
@@ -240,8 +285,12 @@ function handleDemoRequest(config: any) {
   if (method === 'get' && url === '/enterprise/sessions') return demoResponse(config, [{ id: 'session-1', deviceLabel: 'Current browser', ipAddress: '127.0.0.1', lastSeenAt: now }]);
   if (method === 'get' && url === '/enterprise/permissions') return demoResponse(config, { CLIENT: ['client:read', 'ticket:create'], ADMIN: ['*'], ANALYST: ['ticket:read', 'report:create'] });
   if (method === 'get' && url === '/enterprise/billing/plans') return demoResponse(config, demoPlans);
-  if (method === 'post' && url === '/enterprise/billing/checkout') return demoResponse(config, { provider: body.provider || 'STRIPE', checkoutUrl: `${location.origin}/client/billing?demoCheckout=${body.planId}` });
+  if (method === 'post' && (url === '/enterprise/billing/checkout' || url === '/billing/checkout')) return demoResponse(config, { provider: body.provider || 'STRIPE', checkoutUrl: `${location.origin}/client/billing?demoCheckout=${body.planId}` });
   if (method === 'get' && url === '/enterprise/billing/invoices') return demoResponse(config, [{ id: 'invoice-1', amount: 250000, currency: 'NGN', status: 'PAID', createdAt: now }]);
+  if (method === 'get' && url === '/billing/client/subscription') return demoResponse(config, demoSubscriptions[0]);
+  if (method === 'get' && url === '/billing/admin/subscriptions') return demoResponse(config, demoSubscriptions);
+  if (method === 'patch' && url.includes('/billing/admin/subscriptions/')) return demoResponse(config, { ...demoSubscriptions[0], ...body });
+  if (method === 'post' && url.includes('/billing/admin/invoices/') && url.endsWith('/retry')) return demoResponse(config, { ok: true });
   if (method === 'get' && url.includes('/enterprise/reports/') && url.endsWith('/signed-url')) return demoResponse(config, { url: '#', checksum: 'demo-checksum' });
 
   if (method === 'get' && url === '/security-platform/client/security-posture') {
@@ -260,7 +309,7 @@ function handleDemoRequest(config: any) {
     });
   }
   if (method === 'post' && url === '/security-platform/client/security-posture/recalculate') return demoResponse(config, { score: 84, breakdown: { incidents: 86, response: 78, coverage: 88 } });
-  if (method === 'get' && url === '/security-platform/client/security-events') return demoResponse(config, demoSecurityEvents);
+  if (method === 'get' && (url === '/security-platform/client/security-events' || url.startsWith('/client/security-events'))) return demoResponse(config, { items: demoSecurityEvents, analytics: { severityDistribution: [{ severity: 'LOW', _count: { severity: 2 } }, { severity: 'MEDIUM', _count: { severity: 1 } }], topTypes: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 1 } }], correlations: { 'ipAddress:127.0.0.1': 2 } } });
   if (method === 'get' && url === '/security-platform/client/assets') return demoResponse(config, demoAssets);
   if (method === 'get' && url === '/security-platform/client/compliance') return demoResponse(config, demoCompliance);
   if (method === 'post' && url.includes('/security-platform/client/compliance/') && url.endsWith('/evidence')) return demoResponse(config, { id: crypto.randomUUID(), title: body.title, createdAt: now }, 201);
@@ -276,8 +325,31 @@ function handleDemoRequest(config: any) {
   if (method === 'get' && url.startsWith('/security-platform/client/attack-lab/runs/')) return demoResponse(config, demoAttackRuns.find(run => url.endsWith(run.id)) || demoAttackRuns[0]);
   if (method === 'get' && url === '/security-platform/client/attack-lab/drill') return demoResponse(config, { kind: 'phishing', safetyNote: 'Interactive tabletop drill only. No real attack activity occurs.', steps: [{ prompt: 'A user reports a suspicious invoice email. What is the best first action?', options: ['Preserve and report the email', 'Forward it broadly', 'Open the attachment'] }, { prompt: 'The email reached five users. What should the team do next?', options: ['Notify affected users and check logs', 'Ignore it', 'Disable mail security'] }] });
   if (method === 'post' && url === '/security-platform/client/attack-lab/drill/score') return demoResponse(config, { readinessScore: 100, recommendations: ['Document escalation paths', 'Preserve evidence early', 'Practice stakeholder communication'] });
-  if (method === 'get' && url === '/security-platform/admin/security-events') return demoResponse(config, demoSecurityEvents);
+  if (method === 'get' && (url === '/security-platform/admin/security-events' || url.startsWith('/admin/security-events'))) return demoResponse(config, { items: demoSecurityEvents, analytics: { severityDistribution: [{ severity: 'LOW', _count: { severity: 2 } }, { severity: 'MEDIUM', _count: { severity: 1 } }], topTypes: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 1 } }], correlations: { 'deviceFingerprint:demo-browser': 2 } } });
   if (method === 'get' && url === '/security-platform/admin/attack-lab/overview') return demoResponse(config, { runs: demoAttackRuns.length, scenarios: demoAttackScenarios.map(scenario => ({ ...scenario, _count: { runs: scenario.id === 'scenario-phishing-campaign' ? 1 : 0 } })), commonEventTypes: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 4 } }, { type: 'ATTACK_LAB_RUN', _count: { type: 2 } }] });
+  if (method === 'get' && url === '/admin/attack-lab/scenarios') return demoResponse(config, demoAttackScenarios);
+  if (method === 'post' && url === '/admin/attack-lab/scenarios') return demoResponse(config, { id: crypto.randomUUID(), ...body, safetyNote: 'Synthetic scenario only.' }, 201);
+  if (method === 'patch' && url.startsWith('/admin/attack-lab/scenarios/')) return demoResponse(config, { id: url.split('/').pop(), ...body });
+  if (method === 'get' && url === '/admin/attack-lab/runs') return demoResponse(config, demoAttackRuns.map(run => ({ ...run, clientCompany: { name: 'Lagos Fintech Group' } })));
+  if (method === 'post' && url === '/admin/attack-lab/runs') { const scenario = demoAttackScenarios.find(item => item.id === body.scenarioId) || demoAttackScenarios[0]; const run = { ...demoAttackRuns[0], id: crypto.randomUUID(), scenario, scenarioId: scenario.id, clientCompany: { name: 'Lagos Fintech Group' }, startedAt: new Date().toISOString() }; demoAttackRuns.unshift(run); return demoResponse(config, run, 201); }
+  if (method === 'get' && url.startsWith('/admin/attack-lab/runs/')) return demoResponse(config, { ...demoAttackRuns[0], clientCompany: { name: 'Lagos Fintech Group' } });
+  if (method === 'get' && url === '/admin/attack-lab/analytics') return demoResponse(config, { scenarios: demoAttackScenarios.map(scenario => ({ ...scenario, _count: { runs: 1 } })), phases: [{ phase: 'RECON', _count: { phase: 3 } }, { phase: 'CONTAINMENT', _count: { phase: 2 } }], readinessScores: [{ client: 'Lagos Fintech Group', score: 84 }], monthlyActivity: { '2026-05': 4 } });
+  if (method === 'post' && url === '/admin/ai/threat-model') return demoResponse(config, demoAiThreatModel);
+  if (method === 'post' && url === '/admin/ai/attack-surface/analyze') return demoResponse(config, demoAiAttackSurface);
+  if (method === 'post' && url === '/admin/ai/test-cases/generate') return demoResponse(config, demoTestCases);
+  if (method === 'post' && url === '/admin/ai/vuln/analyze') return demoResponse(config, { classification: 'Security misconfiguration', likelihood: 'Medium', impact: 'Potential control weakness requiring validation.', remediation: ['Harden configuration', 'Add monitoring'], evidenceSummary: { confidence: 'medium' } });
+  if (method === 'post' && url === '/admin/ai/report/generate') return demoResponse(config, { executiveSummary: 'Assessment identified managed findings with clear remediation priorities.', technicalFindings: body.findings || [], riskScoring: { overall: 'MEDIUM' }, pdfExport: { status: 'stubbed' } });
+  if (method === 'post' && url === '/admin/scans/run') { const run = { ...demoScanRuns[0], id: crypto.randomUUID(), tool: body.tool, target: body.target, createdAt: new Date().toISOString() }; demoScanRuns.unshift(run); return demoResponse(config, run, 201); }
+  if (method === 'get' && url === '/admin/scans/results') return demoResponse(config, demoScanRuns);
+  if (method === 'post' && url === '/admin/ci/security-results') { const result = { ...demoCiResults[0], id: crypto.randomUUID(), ...body, score: 86, status: 'PASS', createdAt: new Date().toISOString() }; demoCiResults.unshift(result); return demoResponse(config, result, 201); }
+  if (method === 'get' && url === '/admin/ci/security-summary') return demoResponse(config, demoCiResults);
+  if (method === 'get' && url === '/admin/evidence') return demoResponse(config, demoEvidence);
+  if (method === 'post' && url === '/admin/evidence/upload') { const item = { ...demoEvidence[0], id: crypto.randomUUID(), title: body.title || 'Uploaded evidence', createdAt: new Date().toISOString() }; demoEvidence.unshift(item); return demoResponse(config, item, 201); }
+  if (method === 'get' && url.startsWith('/admin/evidence/')) return demoResponse(config, demoEvidence.find(item => url.endsWith(item.id)) || demoEvidence[0]);
+  if (method === 'get' && url.startsWith('/admin/staff-assignments')) return demoResponse(config, demoStaffAssignments);
+  if (method === 'post' && url === '/admin/staff-assignments') { const assignment = { id: crypto.randomUUID(), ...body, user: { name: body.name, email: body.email, role: body.role } }; demoStaffAssignments.unshift(assignment); return demoResponse(config, assignment, 201); }
+  if (method === 'get' && url.startsWith('/client/staff-assignments')) return demoResponse(config, demoStaffAssignments.filter(item => item.scope === 'CLIENT'));
+  if (method === 'post' && url === '/client/staff-assignments') { const assignment = { id: crypto.randomUUID(), scope: 'CLIENT', role: 'CLIENT', permissions: body.permissions || ['client:tickets'], user: { name: body.name, email: body.email, role: 'CLIENT' } }; demoStaffAssignments.unshift(assignment); return demoResponse(config, assignment, 201); }
 
   if (method === 'get' && url === '/client/dashboard') {
     return demoResponse(config, {
@@ -346,7 +418,11 @@ function handleDemoRequest(config: any) {
 
   if (method === 'get' && url === '/admin/dashboard') {
     return demoResponse(config, {
-      metrics: { clients: 3, subscriptions: 2, openTickets: 5, pendingRequests: 4 },
+      metrics: { clients: 3, subscriptions: 2, trialAccounts: 1, openTickets: 5, slaBreaches: 0, pendingRequests: 4, recentReportUploads: 2 },
+      securityPosture: { averageScore: 78, highRiskClients: [{ id: 'hr-1', score: 54, clientCompany: { name: 'Demo Retail Plc' } }], complianceReadiness: [{ framework: 'ISO27001', _avg: { score: 72 } }, { framework: 'SOC2', _avg: { score: 68 } }] },
+      securityEvents: { last24h: 12, severityDistribution: [{ severity: 'LOW', _count: { severity: 7 } }, { severity: 'MEDIUM', _count: { severity: 4 } }, { severity: 'HIGH', _count: { severity: 1 } }], topEventCategories: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 4 } }] },
+      attackLab: { runs: 8, mostTriggeredScenarios: demoAttackScenarios.map(scenario => ({ ...scenario, _count: { runs: 2 } })), readinessScores: [{ client: 'Lagos Fintech Group', score: 84 }] },
+      systemHealth: { apiLatencyMs: 42, errorRate: 0, database: 'online', queue: 'ready', storageUsagePercent: 18 },
       recentActivity: [
         { id: 'log-1', action: 'CLIENT_LOGIN', entityType: 'User', createdAt: now },
         { id: 'log-2', action: 'REPORT_UPLOADED', entityType: 'Report', createdAt: now },
