@@ -10,6 +10,7 @@ GitHub repository: https://github.com/speak2emeka/NaijaShield-Cyber-Portal
 - Client portal for dashboards, reports, tickets, requests, and account settings
 - Admin portal for clients, tickets, requests, audit logs, and platform metrics
 - Expanded portal modules for report/ticket detail pages, company profile, team management, subscription, notifications, audit logs, knowledge base, report upload, and staff management
+- Enterprise hardening for Sentry, Prometheus metrics, Grafana dashboards, Redis/BullMQ queues, request correlation IDs, CI/CD, MFA, SSO readiness, email verification, password reset, object storage, billing, audit export, and permission matrices
 - Express API with JWT auth, refresh tokens, Prisma, PostgreSQL, Swagger UI, and security middleware
 - Frontend offline demo fallback so the portal can be inspected even when the backend database is not running
 
@@ -142,6 +143,18 @@ Frontend:
 cd frontend
 npm run build
 ```
+
+## Enterprise Operations
+
+- Metrics: `GET /metrics` exposes Prometheus metrics for latency, errors, and queue job duration.
+- Observability: set `SENTRY_DSN` and `VITE_SENTRY_DSN` to enable backend and frontend Sentry reporting.
+- Background jobs: Redis is configured through `REDIS_URL`; Docker Compose includes a Redis service.
+- Reports storage: set `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and optional `S3_ENDPOINT` for S3-compatible object storage such as AWS S3, Cloudflare R2, or DigitalOcean Spaces.
+- Billing: Stripe and Paystack keys are represented by `STRIPE_SECRET_KEY` and `PAYSTACK_SECRET_KEY`; hosted checkout endpoints are scaffolded under `/api/enterprise/billing`.
+- MFA and SSO: TOTP MFA endpoints are available under `/api/enterprise/mfa`; SSO provider readiness is exposed under `/api/enterprise/sso/config`.
+- Audit export: `GET /api/enterprise/audit-logs/export.csv` exports recent audit logs with correlation IDs, IP addresses, and user agents.
+- CI/CD: GitHub Actions workflows build frontend/backend, validate Prisma, run migrations, and publish Docker images on version tags.
+- Dashboards: Docker Compose includes Prometheus on `:9090` and Grafana on `:3001`.
 
 Backend:
 
