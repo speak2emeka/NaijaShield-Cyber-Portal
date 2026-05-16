@@ -49,6 +49,8 @@ import {
   ThreatModelViewer,
   VulnerabilityAnalysisWorkspace
 } from './pages/admin/AdminAiSecurityPages';
+import { ComplianceDashboard, CSRDashboard, ManagementOverview, PentestWorkspace, SOCOperations, StaffScheduling } from './pages/admin/AdminEnterpriseOpsPages';
+import { ClientMeetings, ClientMessaging } from './pages/client/ClientCollaborationPages';
 
 export function App() {
   return (
@@ -93,6 +95,8 @@ export function App() {
             <Route path="audit-logs" element={<ClientAuditLogs />} />
             <Route path="knowledge-base" element={<ClientKnowledgeBase />} />
             <Route path="security-score" element={<ClientScoreHistory />} />
+            <Route path="messages" element={<ClientMessaging />} />
+            <Route path="meetings" element={<ClientMeetings />} />
           </Route>
         </Route>
 
@@ -119,6 +123,12 @@ export function App() {
             <Route path="evidence" element={<EvidenceManager />} />
             <Route path="report-builder" element={<ReportBuilder />} />
             <Route path="ci-security" element={<CiSecuritySummary />} />
+            <Route path="scheduling" element={<StaffScheduling />} />
+            <Route path="csr" element={<CSRDashboard />} />
+            <Route path="soc" element={<SOCOperations />} />
+            <Route path="pentest" element={<PentestWorkspace />} />
+            <Route path="compliance" element={<ComplianceDashboard />} />
+            <Route path="system-health" element={<ManagementOverview />} />
           </Route>
         </Route>
       </Routes>
