@@ -11,6 +11,7 @@ GitHub repository: https://github.com/speak2emeka/NaijaShield-Cyber-Portal
 - Admin portal for clients, tickets, requests, audit logs, and platform metrics
 - Expanded portal modules for report/ticket detail pages, company profile, team management, subscription, notifications, audit logs, knowledge base, report upload, and staff management
 - Enterprise hardening for Sentry, Prometheus metrics, Grafana dashboards, Redis/BullMQ queues, request correlation IDs, CI/CD, MFA, SSO readiness, email verification, password reset, object storage, billing, audit export, and permission matrices
+- Advanced security platform modules for zero-trust session risk, tenant key metadata, security events, security posture, attack surface assets, compliance readiness, and a safe simulated Attack Lab
 - Express API with JWT auth, refresh tokens, Prisma, PostgreSQL, Swagger UI, and security middleware
 - Frontend offline demo fallback so the portal can be inspected even when the backend database is not running
 
@@ -163,6 +164,32 @@ cd backend
 npm run build
 ```
 
+## Advanced Security Architecture
+
+- Zero-trust access layer tracks session risk metadata such as device fingerprint, IP, country, user agent, abnormal signals, and step-up requirements for sensitive actions.
+- Tenant-scoped key metadata stores a `tenantKeyId` per client company and exposes service-layer stubs for encryption, decryption, and key rotation. The code is ready for a real KMS provider without coupling business logic to a vendor.
+- Security events act as a mini-SIEM layer for auth, admin, client, reporting, and Attack Lab activity. Client users see their own events; admins can filter global security events.
+- Security posture summarizes incidents, response, coverage, and reporting into a current score with historical score tracking.
+- Attack surface assets model domains, IPs, apps, and cloud assets with risk tags so discovery tooling can be plugged in later.
+- Compliance readiness tracks ISO27001, SOC2, and NDPR status with checklist items and evidence links.
+
+## Safe Attack Lab
+
+The Attack Lab is intentionally non-weaponizable. It does not run network scans, generate exploit payloads, send phishing emails, or provide step-by-step attack instructions. All runs are synthetic playback events and tabletop narratives designed for education, readiness scoring, and defensive planning.
+
+Client Attack Lab features:
+
+- Scenario catalog for credential stuffing, phishing, web app probing, and insider access simulations
+- Synthetic run creation through `POST /api/security-platform/client/attack-lab/runs`
+- Run history and detail views with timelines, phases, attacker narrative, and defender narrative
+- Interactive incident response drill with multiple-choice decision points and readiness recommendations
+
+Admin Attack Lab features:
+
+- Global overview of scenario usage
+- Common security event type summaries
+- Visibility into client adoption of simulated exercises
+
 ## Architecture
 
 ```text
@@ -226,6 +253,19 @@ Client:
 - `GET /api/client/audit-logs`
 - `GET /api/client/knowledge-base`
 - `GET /api/client/company`
+- `GET /api/security-platform/client/security-posture`
+- `POST /api/security-platform/client/security-posture/recalculate`
+- `GET /api/security-platform/client/security-events`
+- `GET /api/security-platform/client/assets`
+- `GET /api/security-platform/client/compliance`
+- `POST /api/security-platform/client/compliance/:id/evidence`
+- `GET /api/security-platform/client/tenant-key`
+- `GET /api/security-platform/client/attack-lab/scenarios`
+- `GET /api/security-platform/client/attack-lab/runs`
+- `POST /api/security-platform/client/attack-lab/runs`
+- `GET /api/security-platform/client/attack-lab/runs/:id`
+- `GET /api/security-platform/client/attack-lab/drill`
+- `POST /api/security-platform/client/attack-lab/drill/score`
 
 Admin:
 
@@ -239,6 +279,10 @@ Admin:
 - `GET /api/admin/requests`
 - `PATCH /api/admin/requests/:id`
 - `GET /api/admin/audit-logs`
+- `GET /api/security-platform/admin/security-events`
+- `GET /api/security-platform/admin/attack-lab/overview`
+- `POST /api/security-platform/admin/clients/:clientCompanyId/rotate-key`
+- `POST /api/security-platform/admin/session-risk/evaluate`
 
 ## Production Notes
 
