@@ -3,7 +3,8 @@ import { Report, ServiceRequest, Ticket, User } from '../types';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
-  withCredentials: true
+  withCredentials: true,
+  timeout: 1500
 });
 
 let accessToken: string | null = localStorage.getItem('ns_access_token');
@@ -140,6 +141,49 @@ const demoPlans = [
   { id: 'enterprise', name: 'Enterprise', priceMonthly: 900000, features: ['Dedicated analyst', 'SSO', 'Custom SLAs'] }
 ];
 
+const demoSecurityEvents = [
+  { id: 'sec-1', type: 'NEW_DEVICE_LOGIN', severity: 'MEDIUM', source: 'auth', message: 'New browser session observed for client administrator.', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, metadata: { riskScore: 42, simulated: true } },
+  { id: 'sec-2', type: 'REPORT_DOWNLOAD_STEP_UP', severity: 'LOW', source: 'reporting', message: 'Step-up authentication required before report download.', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, metadata: { action: 'download-report' } },
+  { id: 'sec-3', type: 'ATTACK_LAB_RUN', severity: 'LOW', source: 'attack-lab', message: 'Safe simulated phishing campaign completed in Attack Lab.', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, metadata: { simulated: true } }
+];
+
+const demoAssets = [
+  { id: 'asset-1', type: 'DOMAIN', identifier: 'lagosfintech.test', riskLevel: 'LOW', lastSeenAt: now },
+  { id: 'asset-2', type: 'APP', identifier: 'customer-portal', riskLevel: 'MEDIUM', lastSeenAt: now },
+  { id: 'asset-3', type: 'CLOUD', identifier: 'production-cloud-account', riskLevel: 'HIGH', lastSeenAt: now }
+];
+
+const demoCompliance = [
+  { id: 'comp-1', framework: 'ISO27001', status: 'IN_PROGRESS', score: 72, lastUpdatedAt: now, checklist: [{ label: 'Asset inventory maintained', status: 'COMPLETE' }, { label: 'Access reviews documented', status: 'IN_PROGRESS' }, { label: 'Supplier risk process approved', status: 'NOT_STARTED' }], evidence: [{ id: 'ev-1', title: 'Access review evidence', createdAt: now }] },
+  { id: 'comp-2', framework: 'SOC2', status: 'IN_PROGRESS', score: 68, lastUpdatedAt: now, checklist: [{ label: 'Change management evidence', status: 'COMPLETE' }, { label: 'Incident response test', status: 'IN_PROGRESS' }], evidence: [] },
+  { id: 'comp-3', framework: 'NDPR', status: 'COMPLETE', score: 88, lastUpdatedAt: now, checklist: [{ label: 'Privacy notice reviewed', status: 'COMPLETE' }, { label: 'Data processing register', status: 'COMPLETE' }], evidence: [] }
+];
+
+const demoAttackScenarios = [
+  { id: 'scenario-credential-stuffing', title: 'Credential Stuffing Attempt', description: 'Synthetic identity abuse storyline using safe, prewritten telemetry.', category: 'Identity', difficulty: 'INTERMEDIATE' },
+  { id: 'scenario-phishing-campaign', title: 'Phishing Campaign Simulation', description: 'Awareness and response exercise with no live messages sent.', category: 'Awareness', difficulty: 'BEGINNER' },
+  { id: 'scenario-web-app-probing', title: 'Web App Probing', description: 'High-level simulated reconnaissance signals for defensive review.', category: 'Application Security', difficulty: 'INTERMEDIATE' },
+  { id: 'scenario-insider-access', title: 'Insider Data Access Attempt', description: 'Tabletop story about unusual data access and escalation paths.', category: 'Insider Risk', difficulty: 'ADVANCED' }
+];
+
+const demoAttackRuns: any[] = [
+  {
+    id: 'run-1',
+    scenarioId: 'scenario-phishing-campaign',
+    scenario: demoAttackScenarios[1],
+    startedAt: now,
+    finishedAt: now,
+    resultSummary: { simulated: true, outcome: 'Detected at initial access phase', readinessScore: 84 },
+    attackerView: { narrative: 'The simulated actor relied on social pressure and a convincing business pretext. No real messages or payloads were generated.' },
+    defenderView: { narrative: 'NaijaShield correlated user reports, mail security alerts, and ticket activity to recommend containment.' },
+    events: [
+      { id: 'ae-1', phase: 'RECON', severity: 'LOW', description: 'Synthetic targeting signal generated for tabletop discussion.', timestamp: now },
+      { id: 'ae-2', phase: 'INITIAL_ACCESS', severity: 'MEDIUM', description: 'User-report event added to the simulated timeline.', timestamp: now },
+      { id: 'ae-3', phase: 'CONTAINMENT', severity: 'LOW', description: 'Containment and communication actions marked complete.', timestamp: now }
+    ]
+  }
+];
+
 function publicUser(user: User & { password: string }): User {
   const { password: _password, ...safeUser } = user;
   return safeUser;
@@ -199,6 +243,41 @@ function handleDemoRequest(config: any) {
   if (method === 'post' && url === '/enterprise/billing/checkout') return demoResponse(config, { provider: body.provider || 'STRIPE', checkoutUrl: `${location.origin}/client/billing?demoCheckout=${body.planId}` });
   if (method === 'get' && url === '/enterprise/billing/invoices') return demoResponse(config, [{ id: 'invoice-1', amount: 250000, currency: 'NGN', status: 'PAID', createdAt: now }]);
   if (method === 'get' && url.includes('/enterprise/reports/') && url.endsWith('/signed-url')) return demoResponse(config, { url: '#', checksum: 'demo-checksum' });
+
+  if (method === 'get' && url === '/security-platform/client/security-posture') {
+    return demoResponse(config, {
+      summary: {
+        clientCompanyId: 'demo-company',
+        score: 84,
+        lastCalculatedAt: now,
+        breakdown: { incidents: 86, response: 78, coverage: 88, reporting: 82 }
+      },
+      history: [
+        { id: 'score-1', score: 68, calculatedAt: '2026-01-15T00:00:00.000Z' },
+        { id: 'score-2', score: 73, calculatedAt: '2026-02-15T00:00:00.000Z' },
+        { id: 'score-3', score: 84, calculatedAt: '2026-04-15T00:00:00.000Z' }
+      ]
+    });
+  }
+  if (method === 'post' && url === '/security-platform/client/security-posture/recalculate') return demoResponse(config, { score: 84, breakdown: { incidents: 86, response: 78, coverage: 88 } });
+  if (method === 'get' && url === '/security-platform/client/security-events') return demoResponse(config, demoSecurityEvents);
+  if (method === 'get' && url === '/security-platform/client/assets') return demoResponse(config, demoAssets);
+  if (method === 'get' && url === '/security-platform/client/compliance') return demoResponse(config, demoCompliance);
+  if (method === 'post' && url.includes('/security-platform/client/compliance/') && url.endsWith('/evidence')) return demoResponse(config, { id: crypto.randomUUID(), title: body.title, createdAt: now }, 201);
+  if (method === 'get' && url === '/security-platform/client/tenant-key') return demoResponse(config, { tenantKeyId: 'kms-demo-acme-finance-v1', rotationDueAt: '2026-11-16T00:00:00.000Z', provider: 'stub-kms' });
+  if (method === 'get' && url === '/security-platform/client/attack-lab/scenarios') return demoResponse(config, demoAttackScenarios);
+  if (method === 'get' && url === '/security-platform/client/attack-lab/runs') return demoResponse(config, demoAttackRuns);
+  if (method === 'post' && url === '/security-platform/client/attack-lab/runs') {
+    const scenario = demoAttackScenarios.find(item => item.id === body.scenarioId) || demoAttackScenarios[0];
+    const run = { ...demoAttackRuns[0], id: crypto.randomUUID(), scenarioId: scenario.id, scenario, startedAt: new Date().toISOString(), finishedAt: new Date().toISOString() };
+    demoAttackRuns.unshift(run);
+    return demoResponse(config, run, 201);
+  }
+  if (method === 'get' && url.startsWith('/security-platform/client/attack-lab/runs/')) return demoResponse(config, demoAttackRuns.find(run => url.endsWith(run.id)) || demoAttackRuns[0]);
+  if (method === 'get' && url === '/security-platform/client/attack-lab/drill') return demoResponse(config, { kind: 'phishing', safetyNote: 'Interactive tabletop drill only. No real attack activity occurs.', steps: [{ prompt: 'A user reports a suspicious invoice email. What is the best first action?', options: ['Preserve and report the email', 'Forward it broadly', 'Open the attachment'] }, { prompt: 'The email reached five users. What should the team do next?', options: ['Notify affected users and check logs', 'Ignore it', 'Disable mail security'] }] });
+  if (method === 'post' && url === '/security-platform/client/attack-lab/drill/score') return demoResponse(config, { readinessScore: 100, recommendations: ['Document escalation paths', 'Preserve evidence early', 'Practice stakeholder communication'] });
+  if (method === 'get' && url === '/security-platform/admin/security-events') return demoResponse(config, demoSecurityEvents);
+  if (method === 'get' && url === '/security-platform/admin/attack-lab/overview') return demoResponse(config, { runs: demoAttackRuns.length, scenarios: demoAttackScenarios.map(scenario => ({ ...scenario, _count: { runs: scenario.id === 'scenario-phishing-campaign' ? 1 : 0 } })), commonEventTypes: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 4 } }, { type: 'ATTACK_LAB_RUN', _count: { type: 2 } }] });
 
   if (method === 'get' && url === '/client/dashboard') {
     return demoResponse(config, {
