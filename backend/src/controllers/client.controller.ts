@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 import { auditLog } from '../middleware/audit.js';
 import { assertFound, HttpError } from '../utils/http.js';
+import { paged, pagination } from '../utils/pagination.js';
 
 function companyId(req: Request) {
   if (!req.user?.clientCompanyId) throw new HttpError(403, 'Client company required');
@@ -38,7 +39,13 @@ export const clientController = {
   },
 
   async reports(req: Request, res: Response) {
-    res.json(await prisma.report.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { createdAt: 'desc' } }));
+    const page = pagination(req);
+    const where = { clientCompanyId: companyId(req), deletedAt: null };
+    const [items, total] = await Promise.all([
+      prisma.report.findMany({ where, orderBy: { createdAt: 'desc' }, skip: page.skip, take: page.take }),
+      prisma.report.count({ where })
+    ]);
+    res.json(paged(items, total, page.page, page.pageSize));
   },
 
   async reportDetail(req: Request, res: Response) {
@@ -47,7 +54,13 @@ export const clientController = {
   },
 
   async tickets(req: Request, res: Response) {
-    res.json(await prisma.ticket.findMany({ where: { clientCompanyId: companyId(req) }, include: { comments: true }, orderBy: { updatedAt: 'desc' } }));
+    const page = pagination(req);
+    const where = { clientCompanyId: companyId(req), deletedAt: null };
+    const [items, total] = await Promise.all([
+      prisma.ticket.findMany({ where, include: { comments: true }, orderBy: { updatedAt: 'desc' }, skip: page.skip, take: page.take }),
+      prisma.ticket.count({ where })
+    ]);
+    res.json(paged(items, total, page.page, page.pageSize));
   },
 
   async createTicket(req: Request, res: Response) {
@@ -92,7 +105,13 @@ export const clientController = {
   },
 
   async requests(req: Request, res: Response) {
-    res.json(await prisma.serviceRequest.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { updatedAt: 'desc' } }));
+    const page = pagination(req);
+    const where = { clientCompanyId: companyId(req), deletedAt: null };
+    const [items, total] = await Promise.all([
+      prisma.serviceRequest.findMany({ where, orderBy: { updatedAt: 'desc' }, skip: page.skip, take: page.take }),
+      prisma.serviceRequest.count({ where })
+    ]);
+    res.json(paged(items, total, page.page, page.pageSize));
   },
 
   async createRequest(req: Request, res: Response) {
