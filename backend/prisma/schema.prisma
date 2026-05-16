@@ -11,6 +11,8 @@ enum UserRole {
   CLIENT
   STAFF
   ANALYST
+  SUPERVISOR
+  AUDITOR
   ADMIN
   SUPERADMIN
 }
@@ -61,12 +63,33 @@ enum NotificationType {
   TICKET
 }
 
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum BillingProvider {
+  PAYSTACK
+  STRIPE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  FAILED
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
   passwordHash    String
   role            UserRole         @default(CLIENT)
   name            String
+  emailVerifiedAt DateTime?
+  mfaEnabled      Boolean          @default(false)
+  mfaSecret       String?
   clientCompanyId String?
   clientCompany   ClientCompany?   @relation(fields: [clientCompanyId], references: [id])
   refreshTokens   RefreshToken[]
@@ -74,8 +97,16 @@ model User {
   ticketComments  TicketComment[]
   notifications   Notification[]
   auditLogs       AuditLog[]
+  authTokens      AuthToken[]
+  sessions        UserSession[]
+  backupCodes     BackupCode[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@index([role])
+  @@index([clientCompanyId])
+  @@index([deletedAt])
 }
 
 model ClientCompany {
@@ -93,6 +124,10 @@ model ClientCompany {
   notifications        Notification[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+
+  @@index([industry])
+  @@index([deletedAt])
 }
 
 model Ticket {
@@ -109,6 +144,13 @@ model Ticket {
   comments         TicketComment[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  @@index([clientCompanyId, status])
+  @@index([createdByUserId])
+  @@index([priority])
+  @@index([updatedAt])
+  @@index([deletedAt])
 }
 
 model TicketComment {
@@ -120,6 +162,9 @@ model TicketComment {
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
 }
 
 model ServiceRequest {
@@ -131,6 +176,12 @@ model ServiceRequest {
   clientCompany   ClientCompany        @relation(fields: [clientCompanyId], references: [id])
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+
+  @@index([clientCompanyId, status])
+  @@index([type])
+  @@index([updatedAt])
+  @@index([deletedAt])
 }
 
 model Report {
@@ -139,8 +190,17 @@ model Report {
   title           String
   description     String
   filePath        String
+  fileUrl         String?
+  storageKey      String?
+  checksum        String?
+  mimeType        String?
+  sizeBytes       Int?
   clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id])
   createdAt       DateTime      @default(now())
+  deletedAt       DateTime?
+
+  @@index([clientCompanyId, createdAt])
+  @@index([deletedAt])
 }
 
 model SecurityScoreHistory {
@@ -150,20 +210,31 @@ model SecurityScoreHistory {
   calculatedAt    DateTime      @default(now())
   notes           String?
   clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id])
+
+  @@index([clientCompanyId, calculatedAt])
 }
 
 model Subscription {
-  id              String             @id @default(uuid())
-  clientCompanyId String             @unique
-  plan            String
-  status          SubscriptionStatus @default(TRIAL)
-  startDate       DateTime
-  endDate         DateTime?
-  renewalDate     DateTime?
-  paymentHistory  Json?
-  clientCompany   ClientCompany      @relation(fields: [clientCompanyId], references: [id])
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id                     String             @id @default(uuid())
+  clientCompanyId        String             @unique
+  plan                   String
+  status                 SubscriptionStatus @default(TRIAL)
+  provider               BillingProvider?
+  providerCustomerId     String?
+  providerSubscriptionId String?
+  startDate              DateTime
+  endDate                DateTime?
+  renewalDate            DateTime?
+  trialEndsAt            DateTime?
+  graceEndsAt            DateTime?
+  paymentHistory         Json?
+  clientCompany          ClientCompany      @relation(fields: [clientCompanyId], references: [id])
+  invoices               Invoice[]
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  @@index([status])
+  @@index([provider])
 }
 
 model RefreshToken {
@@ -176,19 +247,29 @@ model RefreshToken {
   expiresAt  DateTime
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  userId     String?
-  action     String
-  entityType String
-  entityId   String?
-  metadata   Json?
-  ipAddress  String?
-  userAgent  String?
-  user       User?    @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
+  id            String   @id @default(uuid())
+  userId        String?
+  action        String
+  entityType    String
+  entityId      String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  correlationId String?
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([correlationId])
 }
 
 model Notification {
@@ -201,6 +282,10 @@ model Notification {
   user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientCompany   ClientCompany?   @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
   createdAt       DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([clientCompanyId, read])
+  @@index([createdAt])
 }
 
 model KnowledgeBaseArticle {
@@ -210,6 +295,67 @@ model KnowledgeBaseArticle {
   category  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([category])
+  @@index([deletedAt])
+}
+
+model AuthToken {
+  id        String        @id @default(uuid())
+  userId    String
+  type      AuthTokenType
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+model UserSession {
+  id          String    @id @default(uuid())
+  userId      String
+  userAgent   String?
+  ipAddress   String?
+  deviceLabel String?
+  lastSeenAt  DateTime  @default(now())
+  revokedAt   DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+}
+
+model BackupCode {
+  id        String    @id @default(uuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, usedAt])
+}
+
+model Invoice {
+  id                String          @id @default(uuid())
+  subscriptionId    String
+  provider          BillingProvider
+  providerInvoiceId String?
+  amount            Int
+  currency          String          @default("NGN")
+  status            InvoiceStatus   @default(OPEN)
+  hostedUrl         String?
+  paidAt            DateTime?
+  subscription      Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ContactMessage {
