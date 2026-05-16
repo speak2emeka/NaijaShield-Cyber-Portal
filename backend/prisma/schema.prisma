@@ -53,6 +53,14 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+enum NotificationType {
+  INFO
+  WARNING
+  ALERT
+  REPORT
+  TICKET
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -63,6 +71,8 @@ model User {
   clientCompany   ClientCompany?   @relation(fields: [clientCompanyId], references: [id])
   refreshTokens   RefreshToken[]
   tickets         Ticket[]         @relation("TicketCreator")
+  ticketComments  TicketComment[]
+  notifications   Notification[]
   auditLogs       AuditLog[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -80,6 +90,7 @@ model ClientCompany {
   serviceRequests      ServiceRequest[]
   securityScoreHistory SecurityScoreHistory[]
   subscription         Subscription?
+  notifications        Notification[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 }
@@ -107,6 +118,7 @@ model TicketComment {
   body      String
   internal  Boolean  @default(false)
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
 
@@ -177,6 +189,27 @@ model AuditLog {
   userAgent  String?
   user       User?    @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id              String           @id @default(uuid())
+  userId          String?
+  clientCompanyId String?
+  type            NotificationType @default(INFO)
+  message         String
+  read            Boolean          @default(false)
+  user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientCompany   ClientCompany?   @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+}
+
+model KnowledgeBaseArticle {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  category  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ContactMessage {
