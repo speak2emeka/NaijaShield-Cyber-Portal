@@ -165,6 +165,86 @@ enum StaffScope {
   CLIENT
 }
 
+enum StaffLevel {
+  INTERN
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+  DIRECTOR
+  EXECUTIVE
+}
+
+enum StaffDepartment {
+  EXECUTIVE
+  SECURITY_LEADERSHIP
+  SOC
+  RED_TEAM
+  BLUE_TEAM
+  COMPLIANCE
+  CUSTOMER_SUCCESS
+  ENGINEERING
+  SALES_MARKETING
+}
+
+enum ClearanceLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  CONTRACTOR
+  ON_LEAVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum ShiftType {
+  DAY
+  SWING
+  NIGHT
+  ON_CALL
+}
+
+enum MeetingType {
+  TEAM
+  CLIENT
+  INCIDENT_REVIEW
+  PENTEST_PLANNING
+  COMPLIANCE_AUDIT
+  QBR
+}
+
+enum SocIncidentStatus {
+  MONITORING
+  TRIAGE
+  INVESTIGATION
+  RESPONSE
+  REPORTING
+  LESSONS_LEARNED
+  CLOSED
+}
+
+enum PentestStatus {
+  SCOPING
+  PLANNING
+  TESTING
+  REPORTING
+  DELIVERED
+  RETEST
+  CLOSED
+}
+
+enum CustomerHealth {
+  GREEN
+  AMBER
+  RED
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -187,6 +267,12 @@ model User {
   evidenceItems   EvidenceItem[]
   staffAssignments StaffAssignment[]
   aiArtifacts     AiArtifact[]
+  staffProfile    StaffProfile?
+  staffShifts     StaffShift[]
+  meetingOrganizer StaffMeeting[] @relation("MeetingOrganizer")
+  clientMessages  ClientMessage[]
+  assignedSocIncidents SocIncident[] @relation("SocIncidentAssignee")
+  assignedPentests PentestProject[] @relation("PentestAssignee")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime?
@@ -221,6 +307,11 @@ model ClientCompany {
   ciResults            CiSecurityResult[]
   evidenceItems        EvidenceItem[]
   staffAssignments     StaffAssignment[]
+  customerSuccess      CustomerSuccessRecord?
+  clientMessages       ClientMessage[]
+  staffMeetings        StaffMeeting[]
+  socIncidents         SocIncident[]
+  pentestProjects      PentestProject[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -685,4 +776,148 @@ model StaffAssignment {
   @@index([scope, role, active])
   @@index([clientCompanyId])
   @@unique([userId, clientCompanyId, scope])
+}
+
+model StaffProfile {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  jobTitle         String
+  department       StaffDepartment
+  level            StaffLevel
+  clearanceLevel   ClearanceLevel   @default(LOW)
+  employmentStatus EmploymentStatus @default(ACTIVE)
+  certifications   String[]
+  skills           String[]
+  kpis             Json?
+  managerUserId    String?
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([department, level])
+  @@index([clearanceLevel])
+  @@index([employmentStatus])
+}
+
+model StaffShift {
+  id              String     @id @default(uuid())
+  userId          String
+  shiftType       ShiftType
+  startsAt        DateTime
+  endsAt          DateTime
+  onCall          Boolean    @default(false)
+  attendanceStatus String?
+  handoverNotes   String?
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime   @default(now())
+
+  @@index([userId, startsAt])
+  @@index([shiftType, startsAt])
+}
+
+model StaffLeaveRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  @@index([userId, startsAt])
+  @@index([status])
+}
+
+model StaffMeeting {
+  id              String        @id @default(uuid())
+  clientCompanyId String?
+  organizerUserId String?
+  type            MeetingType
+  title           String
+  startsAt        DateTime
+  endsAt          DateTime
+  attendees       Json
+  provider        String?
+  meetingUrl      String?
+  notes           String?
+  clientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  organizer       User?          @relation("MeetingOrganizer", fields: [organizerUserId], references: [id])
+  createdAt       DateTime       @default(now())
+
+  @@index([clientCompanyId, startsAt])
+  @@index([organizerUserId, startsAt])
+  @@index([type])
+}
+
+model CustomerSuccessRecord {
+  id              String         @id @default(uuid())
+  clientCompanyId String         @unique
+  health          CustomerHealth @default(GREEN)
+  onboardingStage String         @default("DISCOVERY")
+  renewalDate     DateTime?
+  qbrDate         DateTime?
+  slaStatus       String         @default("ON_TRACK")
+  upsellOpportunities Json?
+  feedbackScore   Int?
+  notes           String?
+  clientCompany   ClientCompany  @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime       @updatedAt
+
+  @@index([health])
+  @@index([renewalDate])
+}
+
+model ClientMessage {
+  id              String        @id @default(uuid())
+  clientCompanyId String
+  senderUserId    String?
+  subject         String
+  body            String
+  channel         String        @default("PORTAL")
+  readAt          DateTime?
+  clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  sender          User?         @relation(fields: [senderUserId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  @@index([clientCompanyId, createdAt])
+  @@index([senderUserId])
+}
+
+model SocIncident {
+  id              String            @id @default(uuid())
+  clientCompanyId String?
+  title           String
+  severity        SecuritySeverity  @default(MEDIUM)
+  status          SocIncidentStatus @default(MONITORING)
+  assignedUserId  String?
+  timeline        Json
+  playbook        Json?
+  lessonsLearned  String?
+  clientCompany   ClientCompany?    @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  assignedUser    User?             @relation("SocIncidentAssignee", fields: [assignedUserId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([clientCompanyId, status])
+  @@index([assignedUserId])
+  @@index([severity])
+}
+
+model PentestProject {
+  id              String        @id @default(uuid())
+  clientCompanyId String
+  title           String
+  status          PentestStatus @default(SCOPING)
+  scope           Json
+  testPlan        Json?
+  findings        Json?
+  deliveryDate    DateTime?
+  assignedUserId  String?
+  clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  assignedUser    User?         @relation("PentestAssignee", fields: [assignedUserId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clientCompanyId, status])
+  @@index([assignedUserId])
 }
