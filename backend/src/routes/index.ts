@@ -4,6 +4,7 @@ import { authRoutes } from './auth.routes.js';
 import { clientRoutes } from './client.routes.js';
 import { publicRoutes } from './public.routes.js';
 import { enterpriseRoutes } from './enterprise.routes.js';
+import { securityPlatformRoutes } from './security-platform.routes.js';
 
 export const apiRoutes = Router();
 
@@ -12,3 +13,4 @@ apiRoutes.use('/public', publicRoutes);
 apiRoutes.use('/client', clientRoutes);
 apiRoutes.use('/admin', adminRoutes);
 apiRoutes.use('/enterprise', enterpriseRoutes);
+apiRoutes.use('/security-platform', securityPlatformRoutes);
