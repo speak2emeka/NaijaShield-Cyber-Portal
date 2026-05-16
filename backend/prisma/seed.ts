@@ -116,6 +116,44 @@ async function main() {
     ],
     skipDuplicates: true
   });
+
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: client.id,
+        clientCompanyId: company.id,
+        type: 'ALERT',
+        message: 'New high-priority ticket opened for suspicious payroll email campaign.'
+      },
+      {
+        clientCompanyId: company.id,
+        type: 'REPORT',
+        message: 'May Security Posture Review is available in the reports center.'
+      }
+    ],
+    skipDuplicates: true
+  });
+
+  await prisma.knowledgeBaseArticle.createMany({
+    data: [
+      {
+        title: 'How to report a suspected phishing email',
+        category: 'Awareness',
+        content: 'Preserve the email, avoid clicking links or attachments, and open a support ticket with full headers when possible.'
+      },
+      {
+        title: 'Incident response first hour checklist',
+        category: 'Incident Response',
+        content: 'Contain affected accounts, preserve logs, identify impacted assets, and notify NaijaShield through the portal.'
+      },
+      {
+        title: 'MFA rollout guidance',
+        category: 'Identity Security',
+        content: 'Prioritize privileged accounts, enforce phishing-resistant factors, and monitor fallback methods.'
+      }
+    ],
+    skipDuplicates: true
+  });
 }
 
 main()
