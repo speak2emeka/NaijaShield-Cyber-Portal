@@ -9,6 +9,11 @@ const clientLinks = [
   ['Tickets', '/client/tickets'],
   ['Requests', '/client/requests'],
   ['Security Score', '/client/security-score'],
+  ['Security Posture', '/client/security-posture'],
+  ['Security Events', '/client/security-events'],
+  ['Attack Surface', '/client/attack-surface'],
+  ['Compliance', '/client/compliance'],
+  ['Attack Lab', '/client/attack-lab'],
   ['Company', '/client/company'],
   ['Team', '/client/team'],
   ['Subscription', '/client/subscription'],
@@ -27,6 +32,8 @@ const adminLinks = [
   ['Requests', '/admin/requests'],
   ['Reports Upload', '/admin/reports-upload'],
   ['Staff', '/admin/staff'],
+  ['Security Events', '/admin/security-events'],
+  ['Attack Lab', '/admin/attack-lab'],
   ['Audit Logs', '/admin/audit-logs']
 ];
 
