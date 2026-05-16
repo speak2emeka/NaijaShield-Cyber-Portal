@@ -283,6 +283,9 @@ model Subscription {
   renewalDate            DateTime?
   trialEndsAt            DateTime?
   graceEndsAt            DateTime?
+  billingInterval        String             @default("monthly")
+  featureFlags           Json?
+  metadata               Json?
   paymentHistory         Json?
   clientCompany          ClientCompany      @relation(fields: [clientCompanyId], references: [id])
   invoices               Invoice[]
