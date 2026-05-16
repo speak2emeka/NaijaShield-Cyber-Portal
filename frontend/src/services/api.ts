@@ -285,7 +285,7 @@ function demoResponse(config: any, data: unknown, status = 200) {
 
 function handleDemoRequest(config: any) {
   const method = (config.method || 'get').toLowerCase();
-  const url = String(config.url || '').replace(/^\/api/, '');
+  const url = String(config.url || '').replace(/^\/api/, '').split('?')[0];
   const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
 
   if (method === 'post' && url === '/auth/login') {
@@ -517,7 +517,10 @@ function handleDemoRequest(config: any) {
 api.interceptors.response.use(
   response => {
     if (response.data && Array.isArray(response.data.items)) {
-      return { ...response, data: response.data.items };
+      const list = response.data.items;
+      Object.defineProperty(list, 'meta', { value: response.data.meta, enumerable: false });
+      Object.defineProperty(list, 'analytics', { value: response.data.analytics, enumerable: false });
+      return { ...response, data: list };
     }
     return response;
   },
@@ -534,6 +537,7 @@ api.interceptors.response.use(
       original.headers.Authorization = `Bearer ${data.accessToken}`;
       return api(original);
     }
+    error.userMessage = error.response?.data?.error?.message || error.response?.data?.error || error.message || 'Request failed';
     return Promise.reject(error);
   }
 );
