@@ -12,6 +12,9 @@ GitHub repository: https://github.com/speak2emeka/NaijaShield-Cyber-Portal
 - Expanded portal modules for report/ticket detail pages, company profile, team management, subscription, notifications, audit logs, knowledge base, report upload, and staff management
 - Enterprise hardening for Sentry, Prometheus metrics, Grafana dashboards, Redis/BullMQ queues, request correlation IDs, CI/CD, MFA, SSO readiness, email verification, password reset, object storage, billing, audit export, and permission matrices
 - Advanced security platform modules for zero-trust session risk, tenant key metadata, security events, security posture, attack surface assets, compliance readiness, and a safe simulated Attack Lab
+- Admin system modules for executive dashboard aggregation, Mini-SIEM filters/export, safe Attack Lab scenario management/replay, and subscription billing management
+- AI-assisted security testing modules for threat modeling, attack surface analysis, safe test case generation, vulnerability analysis, scan orchestration, report drafting, CI/CD security summaries, evidence management, and staff role assignments
+- Enterprise management modules for HR-style staff records, scheduling, meetings, CSR workflows, SOC operations, pentest projects, client messaging, client meetings, and compliance operations
 - Express API with JWT auth, refresh tokens, Prisma, PostgreSQL, Swagger UI, and security middleware
 - Frontend offline demo fallback so the portal can be inspected even when the backend database is not running
 
@@ -173,6 +176,31 @@ npm run build
 - Attack surface assets model domains, IPs, apps, and cloud assets with risk tags so discovery tooling can be plugged in later.
 - Compliance readiness tracks ISO27001, SOC2, and NDPR status with checklist items and evidence links.
 
+## Admin System
+
+- `GET /api/admin/dashboard` returns executive metrics, security posture, security event snapshots, Attack Lab activity, system health, and recent activity.
+- `GET /api/admin/security-events` powers the Mini-SIEM with filters, pagination, search, severity charts, and basic correlation grouping.
+- `GET /api/admin/security-events/export.csv` exports filtered events.
+- `POST /api/internal/security-events` ingests internal events from auth, admin, client, system, and Attack Lab modules.
+- `GET/POST/PATCH /api/admin/attack-lab/scenarios` manages safe synthetic scenarios.
+- `GET /api/admin/attack-lab/runs` and `GET /api/admin/attack-lab/runs/:id` support run replay and timeline review.
+- `/api/billing/*` exposes checkout, webhook, admin subscription controls, invoice retry, and client subscription details.
+- `/api/admin/ai/*` exposes AI-assisted pentest workflow stubs. They generate defensive analysis and structured validation plans only; exploit payloads and live attack execution are intentionally excluded.
+- `/api/admin/scans/*` orchestrates scanner dry-runs and result ingestion for ZAP, Nmap, Semgrep, and dependency checks.
+- `/api/admin/ci/*` ingests CI security results and applies a simple pass/fail score policy.
+- `/api/admin/evidence/*` stores pentest evidence metadata and uploaded evidence files.
+- `/api/admin/staff-assignments` and `/api/client/staff-assignments` manage scoped staff and client team roles.
+- `/api/admin/staff-directory`, `/api/admin/staff-profiles`, `/api/admin/shifts`, and `/api/admin/meetings` support HR records, role hierarchy, clearances, certifications, skills, shifts, handovers, and meeting scheduling.
+- `/api/admin/csr`, `/api/admin/messages`, `/api/admin/soc/incidents`, and `/api/admin/pentests` support customer success, client communications, SOC incident workflow, and pentest delivery tracking.
+- `/api/client/messages` and `/api/client/meetings` provide client portal collaboration workflows.
+
+Architecture documentation:
+
+- `docs/FOLDER_STRUCTURE.md`
+- `docs/ERD.md`
+- `docs/openapi-3.1.yaml`
+- `docs/ADMIN_WIREFRAMES.md`
+
 ## Safe Attack Lab
 
 The Attack Lab is intentionally non-weaponizable. It does not run network scans, generate exploit payloads, send phishing emails, or provide step-by-step attack instructions. All runs are synthetic playback events and tabletop narratives designed for education, readiness scoring, and defensive planning.
@@ -283,6 +311,50 @@ Admin:
 - `GET /api/security-platform/admin/attack-lab/overview`
 - `POST /api/security-platform/admin/clients/:clientCompanyId/rotate-key`
 - `POST /api/security-platform/admin/session-risk/evaluate`
+- `GET /api/admin/security-events`
+- `GET /api/admin/security-events/export.csv`
+- `GET /api/admin/attack-lab/scenarios`
+- `POST /api/admin/attack-lab/scenarios`
+- `PATCH /api/admin/attack-lab/scenarios/:id`
+- `GET /api/admin/attack-lab/runs`
+- `GET /api/admin/attack-lab/runs/:id`
+- `GET /api/admin/attack-lab/analytics`
+- `GET /api/billing/admin/subscriptions`
+- `PATCH /api/billing/admin/subscriptions/:id/plan`
+- `PATCH /api/billing/admin/subscriptions/:id/status`
+- `POST /api/admin/ai/threat-model`
+- `POST /api/admin/ai/attack-surface/analyze`
+- `POST /api/admin/ai/test-cases/generate`
+- `POST /api/admin/ai/vuln/analyze`
+- `POST /api/admin/ai/report/generate`
+- `POST /api/admin/scans/run`
+- `GET /api/admin/scans/results`
+- `POST /api/admin/ci/security-results`
+- `GET /api/admin/ci/security-summary`
+- `POST /api/admin/evidence/upload`
+- `GET /api/admin/evidence`
+- `GET /api/admin/evidence/:id`
+- `GET /api/admin/staff-assignments`
+- `POST /api/admin/staff-assignments`
+- `GET /api/admin/management/overview`
+- `GET /api/admin/staff-directory`
+- `POST /api/admin/staff-profiles`
+- `GET /api/admin/shifts`
+- `POST /api/admin/shifts`
+- `GET /api/admin/meetings`
+- `POST /api/admin/meetings`
+- `GET /api/admin/csr`
+- `POST /api/admin/csr`
+- `GET /api/admin/messages`
+- `POST /api/admin/messages`
+- `GET /api/admin/soc/incidents`
+- `POST /api/admin/soc/incidents`
+- `GET /api/admin/pentests`
+- `POST /api/admin/pentests`
+- `GET /api/client/messages`
+- `POST /api/client/messages`
+- `GET /api/client/meetings`
+- `POST /api/client/meetings`
 
 ## Production Notes
 
