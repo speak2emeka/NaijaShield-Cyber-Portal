@@ -14,6 +14,18 @@ import { ClientRequests } from './pages/client/ClientRequests';
 import { ClientAccount } from './pages/client/ClientAccount';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminAuditLogs, AdminClients, AdminRequests, AdminTickets } from './pages/admin/AdminTables';
+import { AdminClientDetail, AdminReportsUpload, AdminStaffManagement, AdminTicketDetail } from './pages/admin/AdminMorePages';
+import {
+  ClientAuditLogs,
+  ClientCompanyProfile,
+  ClientKnowledgeBase,
+  ClientNotifications,
+  ClientReportDetail,
+  ClientScoreHistory,
+  ClientSubscription,
+  ClientTeamManagement,
+  ClientTicketDetail
+} from './pages/client/ClientMorePages';
 
 export function App() {
   return (
@@ -35,9 +47,18 @@ export function App() {
           <Route path="client" element={<DashboardLayout />}>
             <Route index element={<ClientDashboard />} />
             <Route path="reports" element={<ClientReports />} />
+            <Route path="reports/:id" element={<ClientReportDetail />} />
             <Route path="tickets" element={<ClientTickets />} />
+            <Route path="tickets/:id" element={<ClientTicketDetail />} />
             <Route path="requests" element={<ClientRequests />} />
             <Route path="account" element={<ClientAccount />} />
+            <Route path="company" element={<ClientCompanyProfile />} />
+            <Route path="team" element={<ClientTeamManagement />} />
+            <Route path="subscription" element={<ClientSubscription />} />
+            <Route path="notifications" element={<ClientNotifications />} />
+            <Route path="audit-logs" element={<ClientAuditLogs />} />
+            <Route path="knowledge-base" element={<ClientKnowledgeBase />} />
+            <Route path="security-score" element={<ClientScoreHistory />} />
           </Route>
         </Route>
 
@@ -45,9 +66,13 @@ export function App() {
           <Route path="admin" element={<DashboardLayout admin />}>
             <Route index element={<AdminDashboard />} />
             <Route path="clients" element={<AdminClients />} />
+            <Route path="clients/:id" element={<AdminClientDetail />} />
             <Route path="tickets" element={<AdminTickets />} />
+            <Route path="tickets/:id" element={<AdminTicketDetail />} />
             <Route path="requests" element={<AdminRequests />} />
             <Route path="audit-logs" element={<AdminAuditLogs />} />
+            <Route path="reports-upload" element={<AdminReportsUpload />} />
+            <Route path="staff" element={<AdminStaffManagement />} />
           </Route>
         </Route>
       </Routes>
