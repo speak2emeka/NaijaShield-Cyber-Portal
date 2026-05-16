@@ -37,6 +37,18 @@ import {
   ClientSecurityPosture
 } from './pages/client/ClientSecurityPlatformPages';
 import { AdminAttackLabOverview, AdminSecurityEvents } from './pages/admin/AdminSecurityPlatformPages';
+import { AdminBilling } from './pages/admin/AdminBilling';
+import {
+  AiSecurityAssistant,
+  AttackSurfaceDashboard,
+  CiSecuritySummary,
+  EvidenceManager,
+  ReportBuilder,
+  ScanResultsDashboard,
+  TestCaseLibrary,
+  ThreatModelViewer,
+  VulnerabilityAnalysisWorkspace
+} from './pages/admin/AdminAiSecurityPages';
 
 export function App() {
   return (
@@ -97,6 +109,16 @@ export function App() {
             <Route path="staff" element={<AdminStaffManagement />} />
             <Route path="security-events" element={<AdminSecurityEvents />} />
             <Route path="attack-lab" element={<AdminAttackLabOverview />} />
+            <Route path="billing" element={<AdminBilling />} />
+            <Route path="ai-assistant" element={<AiSecurityAssistant />} />
+            <Route path="threat-models" element={<ThreatModelViewer />} />
+            <Route path="attack-surface" element={<AttackSurfaceDashboard />} />
+            <Route path="test-cases" element={<TestCaseLibrary />} />
+            <Route path="scans" element={<ScanResultsDashboard />} />
+            <Route path="vulnerability-analysis" element={<VulnerabilityAnalysisWorkspace />} />
+            <Route path="evidence" element={<EvidenceManager />} />
+            <Route path="report-builder" element={<ReportBuilder />} />
+            <Route path="ci-security" element={<CiSecuritySummary />} />
           </Route>
         </Route>
       </Routes>
