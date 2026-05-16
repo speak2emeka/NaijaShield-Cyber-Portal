@@ -1,5 +1,5 @@
 import argon2 from 'argon2';
-import { PrismaClient, ServiceRequestStatus, ServiceRequestType, SubscriptionStatus, TicketPriority, TicketStatus, UserRole } from '@prisma/client';
+import { AssetType, AttackDifficulty, ComplianceFramework, ComplianceItemStatus, PrismaClient, RiskLevel, SecuritySeverity, ServiceRequestStatus, ServiceRequestType, SubscriptionStatus, TicketPriority, TicketStatus, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,9 @@ async function main() {
       name: 'Acme Finance Ltd',
       industry: 'Banking',
       size: '250-500',
-      contactEmail: 'security@acmefinance.test'
+      contactEmail: 'security@acmefinance.test',
+      tenantKeyId: 'kms-demo-acme-finance-v1',
+      keyRotationDueAt: new Date('2026-12-31')
     }
   });
 
@@ -154,6 +156,120 @@ async function main() {
     ],
     skipDuplicates: true
   });
+
+  await prisma.securityPostureSummary.upsert({
+    where: { clientCompanyId: company.id },
+    update: {},
+    create: {
+      clientCompanyId: company.id,
+      score: 84,
+      breakdown: {
+        incidents: 78,
+        response: 86,
+        coverage: 88,
+        notes: ['Open high-priority ticket present', 'Recent report available', 'MFA rollout in progress']
+      }
+    }
+  });
+
+  await prisma.securityEvent.createMany({
+    data: [
+      {
+        clientCompanyId: company.id,
+        type: 'AUTH_NEW_DEVICE',
+        severity: SecuritySeverity.MEDIUM,
+        source: 'zero-trust',
+        message: 'New browser fingerprint observed for demo client.',
+        metadata: { riskScore: 42, flags: ['new_device'] }
+      },
+      {
+        clientCompanyId: company.id,
+        type: 'ATTACK_LAB_DETECTION',
+        severity: SecuritySeverity.LOW,
+        source: 'attack-lab',
+        message: 'Synthetic phishing campaign simulation detected at initial access phase.',
+        metadata: { simulated: true, nonWeaponizable: true }
+      }
+    ],
+    skipDuplicates: true
+  });
+
+  await prisma.clientAsset.createMany({
+    data: [
+      { clientCompanyId: company.id, type: AssetType.DOMAIN, identifier: 'acmefinance.test', riskLevel: RiskLevel.MEDIUM, metadata: { source: 'demo-seed' } },
+      { clientCompanyId: company.id, type: AssetType.APP, identifier: 'customer-portal-demo', riskLevel: RiskLevel.HIGH, metadata: { source: 'demo-seed', note: 'Synthetic asset for posture visualization' } },
+      { clientCompanyId: company.id, type: AssetType.CLOUD, identifier: 'aws-demo-account', riskLevel: RiskLevel.LOW, metadata: { source: 'demo-seed' } }
+    ],
+    skipDuplicates: true
+  });
+
+  for (const framework of [ComplianceFramework.ISO27001, ComplianceFramework.SOC2, ComplianceFramework.NDPR]) {
+    await prisma.complianceStatus.upsert({
+      where: { clientCompanyId_framework: { clientCompanyId: company.id, framework } },
+      update: {},
+      create: {
+        clientCompanyId: company.id,
+        framework,
+        status: framework === ComplianceFramework.NDPR ? ComplianceItemStatus.COMPLETE : ComplianceItemStatus.IN_PROGRESS,
+        score: framework === ComplianceFramework.NDPR ? 91 : 72,
+        checklist: [
+          { item: 'Policy ownership assigned', status: 'COMPLETE' },
+          { item: 'Evidence uploaded', status: framework === ComplianceFramework.NDPR ? 'COMPLETE' : 'IN_PROGRESS' },
+          { item: 'Quarterly control review', status: 'IN_PROGRESS' }
+        ]
+      }
+    });
+  }
+
+  const scenarioTemplates = [
+    {
+      id: 'scenario-credential-stuffing',
+      title: 'Credential Stuffing Attempt',
+      description: 'Synthetic replay of suspicious login pressure against a protected portal. No real credentials, targets, or exploit logic are used.',
+      category: 'Identity Security',
+      difficulty: AttackDifficulty.BEGINNER
+    },
+    {
+      id: 'scenario-phishing-campaign',
+      title: 'Phishing Campaign Simulation',
+      description: 'A pre-recorded awareness scenario showing how phishing indicators become detections and response tasks.',
+      category: 'Awareness',
+      difficulty: AttackDifficulty.BEGINNER
+    },
+    {
+      id: 'scenario-web-app-probing',
+      title: 'Web App Probing',
+      description: 'Safe, high-level timeline of noisy web probing indicators without payloads or actionable exploitation detail.',
+      category: 'Application Security',
+      difficulty: AttackDifficulty.INTERMEDIATE
+    },
+    {
+      id: 'scenario-insider-access',
+      title: 'Insider Data Access Attempt',
+      description: 'Synthetic data access anomaly and response exercise focused on detection, escalation, and containment.',
+      category: 'Data Protection',
+      difficulty: AttackDifficulty.ADVANCED
+    }
+  ];
+
+  for (const scenario of scenarioTemplates) {
+    await prisma.attackScenario.upsert({
+      where: { id: scenario.id },
+      update: {},
+      create: {
+        ...scenario,
+        safetyNote: 'Simulation only: no real network activity, payloads, exploit steps, or reusable offensive code.',
+        eventTemplate: [
+          { phase: 'RECON', severity: 'LOW', description: 'Synthetic external signal observed and classified.' },
+          { phase: 'INITIAL_ACCESS', severity: 'MEDIUM', description: 'Simulated suspicious access attempt enters detection workflow.' },
+          { phase: 'CONTAINMENT', severity: 'LOW', description: 'NaijaShield playbook recommends containment and user notification.' },
+          { phase: 'RECOVERY', severity: 'LOW', description: 'Readiness score and follow-up recommendations generated.' }
+        ],
+        attackerTemplate: { narrative: 'High-level simulated adversary storyline for awareness only, with no operational details.' },
+        defenderTemplate: { narrative: 'Detection logic, triage queueing, stakeholder notification, and containment recommendations.' }
+      }
+    });
+  }
 }
 
 main()
