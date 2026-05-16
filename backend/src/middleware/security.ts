@@ -9,7 +9,7 @@ import pinoHttp from 'pino-http';
 import { env, isProduction } from '../config/env.js';
 import { logger } from '../config/logger.js';
 
-export const requestLogger = pinoHttp({ logger });
+export const requestLogger = (pinoHttp as never as (options: unknown) => express.RequestHandler)({ logger });
 
 export const corsMiddleware = cors({
   origin: env.FRONTEND_ORIGIN,
