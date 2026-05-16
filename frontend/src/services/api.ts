@@ -229,6 +229,38 @@ const demoStaffAssignments = [
   { id: 'assign-2', scope: 'CLIENT', role: 'CLIENT', permissions: ['client:tickets', 'client:reports'], user: { name: 'Client Manager', email: 'manager@example.com', role: 'CLIENT' }, clientCompany: { name: 'Lagos Fintech Group' } }
 ];
 
+const demoStaffDirectory = [
+  { id: 'staff-user-1', name: 'SOC Analyst', email: 'analyst@naijashield.ng', role: 'ANALYST', staffProfile: { jobTitle: 'SOC Analyst L2', department: 'SOC', level: 'MID', clearanceLevel: 'HIGH', employmentStatus: 'ACTIVE', certifications: ['Security+'], skills: ['SIEM', 'Triage'], kpis: { responseTime: 18, ticketHandling: 42, satisfaction: 91 } } },
+  { id: 'staff-user-2', name: 'Customer Success Manager', email: 'csm@naijashield.ng', role: 'STAFF', staffProfile: { jobTitle: 'Customer Success Manager', department: 'CUSTOMER_SUCCESS', level: 'MANAGER', clearanceLevel: 'MEDIUM', employmentStatus: 'ACTIVE', certifications: ['ITIL'], skills: ['QBR', 'Renewals'], kpis: { satisfaction: 94 } } }
+];
+
+const demoShifts = [
+  { id: 'shift-1', shiftType: 'DAY', startsAt: now, endsAt: now, onCall: false, attendanceStatus: 'PRESENT', handoverNotes: 'Monitor high priority alerts.', user: demoStaffDirectory[0] },
+  { id: 'shift-2', shiftType: 'ON_CALL', startsAt: now, endsAt: now, onCall: true, attendanceStatus: 'SCHEDULED', handoverNotes: 'IR escalation coverage.', user: demoStaffDirectory[0] }
+];
+
+const demoMeetings = [
+  { id: 'meeting-1', type: 'QBR', title: 'Quarterly Business Review', startsAt: now, endsAt: now, attendees: ['client@example.com', 'csm@naijashield.ng'], provider: 'manual', clientCompany: { name: 'Lagos Fintech Group' } },
+  { id: 'meeting-2', type: 'INCIDENT_REVIEW', title: 'Incident Review', startsAt: now, endsAt: now, attendees: ['analyst@naijashield.ng'], provider: 'manual', clientCompany: { name: 'Lagos Fintech Group' } }
+];
+
+const demoCsr = [
+  { id: 'csr-1', health: 'GREEN', onboardingStage: 'LIVE', slaStatus: 'ON_TRACK', feedbackScore: 94, renewalDate: '2026-12-31T00:00:00.000Z', notes: 'Healthy account with Attack Lab adoption.', clientCompany: { name: 'Lagos Fintech Group', subscription: { plan: 'pro' }, securityPosture: { score: 84 } } },
+  { id: 'csr-2', health: 'AMBER', onboardingStage: 'ONBOARDING', slaStatus: 'WATCH', feedbackScore: 78, renewalDate: '2026-09-30T00:00:00.000Z', notes: 'Needs compliance workshop.', clientCompany: { name: 'Abuja Health Network', subscription: { plan: 'enterprise' }, securityPosture: { score: 69 } } }
+];
+
+const demoMessages = [
+  { id: 'msg-1', subject: 'Monthly security update', body: 'Your posture score improved after MFA rollout.', channel: 'PORTAL', createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, sender: { name: 'Customer Success Manager' } }
+];
+
+const demoSocIncidents = [
+  { id: 'soc-1', title: 'Suspicious login investigation', severity: 'MEDIUM', status: 'TRIAGE', createdAt: now, updatedAt: now, clientCompany: { name: 'Lagos Fintech Group' }, assignedUser: { name: 'SOC Analyst' }, timeline: [{ phase: 'Monitoring', note: 'Alert received' }, { phase: 'Triage', note: 'User contacted' }] }
+];
+
+const demoPentests = [
+  { id: 'pt-1', title: 'Customer Portal Assessment', status: 'TESTING', deliveryDate: '2026-06-30T00:00:00.000Z', clientCompany: { name: 'Lagos Fintech Group' }, assignedUser: { name: 'Pentester' }, scope: { assets: ['customer-portal'], notes: 'Authorized web app assessment only.' }, findings: [] }
+];
+
 function publicUser(user: User & { password: string }): User {
   const { password: _password, ...safeUser } = user;
   return safeUser;
@@ -348,8 +380,28 @@ function handleDemoRequest(config: any) {
   if (method === 'get' && url.startsWith('/admin/evidence/')) return demoResponse(config, demoEvidence.find(item => url.endsWith(item.id)) || demoEvidence[0]);
   if (method === 'get' && url.startsWith('/admin/staff-assignments')) return demoResponse(config, demoStaffAssignments);
   if (method === 'post' && url === '/admin/staff-assignments') { const assignment = { id: crypto.randomUUID(), ...body, user: { name: body.name, email: body.email, role: body.role } }; demoStaffAssignments.unshift(assignment); return demoResponse(config, assignment, 201); }
+  if (method === 'post' && url === '/admin/staff-profiles') return demoResponse(config, { id: crypto.randomUUID(), ...body }, 201);
   if (method === 'get' && url.startsWith('/client/staff-assignments')) return demoResponse(config, demoStaffAssignments.filter(item => item.scope === 'CLIENT'));
   if (method === 'post' && url === '/client/staff-assignments') { const assignment = { id: crypto.randomUUID(), scope: 'CLIENT', role: 'CLIENT', permissions: body.permissions || ['client:tickets'], user: { name: body.name, email: body.email, role: 'CLIENT' } }; demoStaffAssignments.unshift(assignment); return demoResponse(config, assignment, 201); }
+  if (method === 'get' && url === '/admin/management/overview') return demoResponse(config, { staff: demoStaffDirectory.length, shifts: demoShifts.length, csr: [{ health: 'GREEN', _count: { health: 1 } }], soc: [{ status: 'TRIAGE', _count: { status: 1 } }], pentests: [{ status: 'TESTING', _count: { status: 1 } }], meetings: demoMeetings.length });
+  if (method === 'get' && url === '/admin/staff-directory') return demoResponse(config, demoStaffDirectory);
+  if (method === 'post' && url === '/admin/staff-profiles') return demoResponse(config, { id: crypto.randomUUID(), ...body }, 201);
+  if (method === 'get' && url === '/admin/shifts') return demoResponse(config, demoShifts);
+  if (method === 'post' && url === '/admin/shifts') { const shift = { id: crypto.randomUUID(), ...body, user: demoStaffDirectory[0] }; demoShifts.unshift(shift); return demoResponse(config, shift, 201); }
+  if (method === 'get' && url.startsWith('/admin/meetings')) return demoResponse(config, demoMeetings);
+  if (method === 'post' && url === '/admin/meetings') { const meeting = { id: crypto.randomUUID(), ...body, createdAt: now, clientCompany: { name: 'Lagos Fintech Group' } }; demoMeetings.unshift(meeting); return demoResponse(config, meeting, 201); }
+  if (method === 'get' && url === '/admin/csr') return demoResponse(config, demoCsr);
+  if (method === 'post' && url === '/admin/csr') return demoResponse(config, { id: crypto.randomUUID(), ...body }, 201);
+  if (method === 'get' && url.startsWith('/admin/messages')) return demoResponse(config, demoMessages);
+  if (method === 'post' && url === '/admin/messages') { const message = { id: crypto.randomUUID(), ...body, createdAt: now, clientCompany: { name: 'Lagos Fintech Group' }, sender: { name: 'NaijaShield Admin' } }; demoMessages.unshift(message); return demoResponse(config, message, 201); }
+  if (method === 'get' && url === '/admin/soc/incidents') return demoResponse(config, demoSocIncidents);
+  if (method === 'post' && url === '/admin/soc/incidents') { const incident = { id: crypto.randomUUID(), ...body, createdAt: now, updatedAt: now, timeline: [{ phase: 'Monitoring', note: 'Created' }] }; demoSocIncidents.unshift(incident); return demoResponse(config, incident, 201); }
+  if (method === 'get' && url === '/admin/pentests') return demoResponse(config, demoPentests);
+  if (method === 'post' && url === '/admin/pentests') { const project = { id: crypto.randomUUID(), ...body, createdAt: now, updatedAt: now, scope: { assets: String(body.assets || '').split(',') }, clientCompany: { name: 'Lagos Fintech Group' } }; demoPentests.unshift(project); return demoResponse(config, project, 201); }
+  if (method === 'get' && url === '/client/messages') return demoResponse(config, demoMessages);
+  if (method === 'post' && url === '/client/messages') { const message = { id: crypto.randomUUID(), ...body, createdAt: now, sender: { name: 'Demo Client' }, clientCompany: { name: 'Lagos Fintech Group' } }; demoMessages.unshift(message); return demoResponse(config, message, 201); }
+  if (method === 'get' && url === '/client/meetings') return demoResponse(config, demoMeetings);
+  if (method === 'post' && url === '/client/meetings') { const meeting = { id: crypto.randomUUID(), ...body, createdAt: now, clientCompany: { name: 'Lagos Fintech Group' } }; demoMeetings.unshift(meeting); return demoResponse(config, meeting, 201); }
 
   if (method === 'get' && url === '/client/dashboard') {
     return demoResponse(config, {
