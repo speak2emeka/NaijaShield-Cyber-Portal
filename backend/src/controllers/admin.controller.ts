@@ -29,7 +29,7 @@ export const adminController = {
 
   async clientDetail(req: Request, res: Response) {
     res.json(assertFound(await prisma.clientCompany.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       include: {
         users: { select: { id: true, name: true, email: true, role: true } },
         reports: true,
@@ -42,7 +42,7 @@ export const adminController = {
   },
 
   async clientReports(req: Request, res: Response) {
-    res.json(await prisma.report.findMany({ where: { clientCompanyId: req.params.id }, orderBy: { createdAt: 'desc' } }));
+    res.json(await prisma.report.findMany({ where: { clientCompanyId: String(req.params.id) }, orderBy: { createdAt: 'desc' } }));
   },
 
   async uploadReport(req: Request, res: Response) {
@@ -50,13 +50,13 @@ export const adminController = {
     if (!file) return res.status(400).json({ error: 'PDF report file is required' });
     const report = await prisma.report.create({
       data: {
-        clientCompanyId: req.params.id,
+        clientCompanyId: String(req.params.id),
         title: req.body.title,
         description: req.body.description,
         filePath: path.join('/uploads/reports', file.filename).replaceAll('\\', '/')
       }
     });
-    await auditLog(req, 'report.upload', 'Report', report.id, { clientCompanyId: req.params.id });
+    await auditLog(req, 'report.upload', 'Report', report.id, { clientCompanyId: String(req.params.id) });
     res.status(201).json(report);
   },
 
@@ -73,7 +73,7 @@ export const adminController = {
   },
 
   async patchTicket(req: Request, res: Response) {
-    const updated = await prisma.ticket.update({ where: { id: req.params.id }, data: req.body });
+    const updated = await prisma.ticket.update({ where: { id: String(req.params.id) }, data: req.body });
     await auditLog(req, 'ticket.admin_update', 'Ticket', updated.id, req.body);
     res.json(updated);
   },
@@ -83,7 +83,7 @@ export const adminController = {
   },
 
   async patchRequest(req: Request, res: Response) {
-    const updated = await prisma.serviceRequest.update({ where: { id: req.params.id }, data: { status: req.body.status } });
+    const updated = await prisma.serviceRequest.update({ where: { id: String(req.params.id) }, data: { status: req.body.status } });
     await auditLog(req, 'service_request.admin_update', 'ServiceRequest', updated.id, { status: updated.status });
     res.json(updated);
   },
