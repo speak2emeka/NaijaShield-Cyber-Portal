@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { Bell, LogOut, Shield, Menu, X } from 'lucide-react';
+import { Bell, LogOut, Shield, Menu, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 
@@ -8,6 +8,13 @@ const clientLinks = [
   ['Reports', '/client/reports'],
   ['Tickets', '/client/tickets'],
   ['Requests', '/client/requests'],
+  ['Security Score', '/client/security-score'],
+  ['Company', '/client/company'],
+  ['Team', '/client/team'],
+  ['Subscription', '/client/subscription'],
+  ['Notifications', '/client/notifications'],
+  ['Audit Logs', '/client/audit-logs'],
+  ['Knowledge Base', '/client/knowledge-base'],
   ['Account', '/client/account']
 ];
 
@@ -16,16 +23,19 @@ const adminLinks = [
   ['Clients', '/admin/clients'],
   ['Tickets', '/admin/tickets'],
   ['Requests', '/admin/requests'],
+  ['Reports Upload', '/admin/reports-upload'],
+  ['Staff', '/admin/staff'],
   ['Audit Logs', '/admin/audit-logs']
 ];
 
 export function DashboardLayout({ admin = false }: { admin?: boolean }) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
   const links = admin ? adminLinks : clientLinks;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_80%_0%,rgba(0,255,153,0.14),transparent_34%),linear-gradient(135deg,#081120,#050c17)]">
+    <div className={`min-h-screen ${lightMode ? 'bg-slate-100 text-slate-950' : 'bg-[radial-gradient(circle_at_80%_0%,rgba(0,255,153,0.14),transparent_34%),linear-gradient(135deg,#081120,#050c17)] text-white'}`}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -36,7 +46,7 @@ export function DashboardLayout({ admin = false }: { admin?: boolean }) {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-72 border-r border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-white/10 ${lightMode ? 'bg-white' : 'bg-white/[0.04]'} p-5 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex items-center justify-between mb-8">
           <Link to="/" className="flex items-center gap-3 font-black text-shield-glow hover:opacity-80 transition-opacity" aria-label="NaijaShield Portal Home">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-shield-green to-shield-glow text-shield-deep">
@@ -68,7 +78,7 @@ export function DashboardLayout({ admin = false }: { admin?: boolean }) {
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-shield-navy/80 px-6 py-4 backdrop-blur-xl">
+        <header className={`sticky top-0 z-20 flex items-center justify-between border-b border-white/10 px-6 py-4 backdrop-blur-xl ${lightMode ? 'bg-white/90' : 'bg-shield-navy/80'}`}>
           <div className="flex items-center gap-4 flex-1">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -85,11 +95,19 @@ export function DashboardLayout({ admin = false }: { admin?: boolean }) {
           </div>
           <div className="flex items-center gap-3">
             <button 
+              onClick={() => setLightMode(value => !value)}
+              className="rounded-full border border-white/10 bg-white/5 p-3 hover:bg-white/10 transition-colors" 
+              aria-label="Toggle light mode"
+            >
+              {lightMode ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
+            </button>
+            <NavLink
+              to={admin ? '/admin/audit-logs' : '/client/notifications'}
               className="rounded-full border border-white/10 bg-white/5 p-3 hover:bg-white/10 transition-colors" 
               aria-label="Notifications"
             >
               <Bell size={18} aria-hidden="true" />
-            </button>
+            </NavLink>
             <button 
               onClick={logout} 
               className="btn-secondary py-2" 
