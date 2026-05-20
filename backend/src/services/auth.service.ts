@@ -55,6 +55,7 @@ export const authService = {
     if (existing) throw new HttpError(409, 'Email is already registered');
 
     const passwordHash = await argon2.hash(input.password);
+    const shieldStart = await prisma.plan.findUnique({ where: { slug: 'shield-start' } });
     const user = await prisma.user.create({
       data: {
         name: input.name,
@@ -67,9 +68,11 @@ export const authService = {
             industry: input.industry,
             size: input.size,
             contactEmail: input.email.toLowerCase(),
+            productPlanId: shieldStart?.id,
             subscription: {
               create: {
                 plan: 'ShieldStart',
+                planId: shieldStart?.id,
                 status: 'TRIAL',
                 startDate: new Date(),
                 renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

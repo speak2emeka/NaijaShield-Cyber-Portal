@@ -408,6 +408,35 @@ function handleDemoRequest(config: any) {
     return demoResponse(config, { accessToken: 'demo-access-token', user: publicUser(user) });
   }
 
+  if (method === 'post' && url === '/auth/register') {
+    const email = String(body.email || '').toLowerCase();
+    const password = String(body.password || '');
+    if (!email || !body.name || !body.companyName || !body.industry || !body.size) return null;
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) return null;
+
+    const clientCompanyId = `company-${crypto.randomUUID()}`;
+    demoUsers[email] = {
+      id: crypto.randomUUID(),
+      email,
+      password,
+      name: String(body.name),
+      role: 'CLIENT',
+      clientCompanyId
+    };
+    demoTierCompanies[clientCompanyId] = {
+      id: clientCompanyId,
+      name: String(body.companyName),
+      industry: String(body.industry),
+      size: String(body.size),
+      contactEmail: email,
+      users: [publicUser(demoUsers[email])],
+      subscription: { plan: 'ShieldStart', status: 'TRIAL', startDate: now, renewalDate: now, paymentHistory: [] }
+    };
+    demoTierPlans[clientCompanyId] = demoTierPlans['company-start'];
+    localStorage.setItem('ns_demo_user', email);
+    return demoResponse(config, { accessToken: 'demo-access-token', user: publicUser(demoUsers[email]) }, 201);
+  }
+
   if (method === 'get' && url === '/auth/me') {
     const user = demoSessionUser();
     return user ? demoResponse(config, { user }) : null;

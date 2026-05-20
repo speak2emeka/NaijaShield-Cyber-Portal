@@ -17,8 +17,8 @@ export function Register() {
       await register(payload);
       toast.success('Account created successfully!');
       navigate('/client');
-    } catch {
-      toast.error('Registration failed. Please try again.');
+    } catch (error: any) {
+      toast.error(error?.userMessage || 'Registration failed. Please check the form and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +55,7 @@ export function Register() {
             <div>
               <label htmlFor="password" className="label">Password</label>
               <input id="password" className="input" name="password" type="password" placeholder="Enter a strong password" required aria-required="true" />
-              <p className="text-xs text-slate-500 mt-1">At least 8 characters recommended</p>
+              <p className="mt-1 text-xs text-slate-500">Use at least 8 characters with uppercase, lowercase, and a number.</p>
             </div>
           </fieldset>
 
