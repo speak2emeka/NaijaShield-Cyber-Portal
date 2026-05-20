@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, FileText, LifeBuoy, BarChart3, ArrowRight } from 'lucide-react';
+import { ScoreChart } from '../../components/ScoreChart';
 
 const features = [
   ['Security posture', 'Track score history, risks, and compliance readiness.', ShieldCheck],
@@ -9,66 +11,126 @@ const features = [
 ];
 
 export function Home() {
+  const initialTrend = useMemo(
+    () => [
+      { score: 72, calculatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+      { score: 76, calculatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+      { score: 79, calculatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+      { score: 81, calculatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+      { score: 83, calculatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+      { score: 84, calculatedAt: new Date().toISOString() }
+    ],
+    []
+  );
+
+  const [liveScores, setLiveScores] = useState(initialTrend);
+  const [liveScore, setLiveScore] = useState(initialTrend[initialTrend.length - 1].score);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setLiveScores(prev => {
+        const next = Math.min(100, Math.max(65, prev[prev.length - 1].score + (Math.random() > 0.4 ? 1 : -1) * Math.ceil(Math.random() * 3)));
+        const nextPoint = {
+          score: next,
+          calculatedAt: new Date().toISOString()
+        };
+        const updated = [...prev.slice(1), nextPoint];
+        setLiveScore(next);
+        return updated;
+      });
+    }, 4200);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   return (
     <main>
       {/* Hero Section */}
-      <section className="mx-auto grid min-h-[720px] max-w-7xl items-center gap-10 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <p className="mb-4 text-sm font-black uppercase tracking-widest text-shield-glow">Cybersecurity service platform</p>
-          <h1 className="max-w-4xl text-5xl font-black leading-tight md:text-7xl">Protecting Africa's digital future with a secure client portal.</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">NaijaShield Cyber Portal helps organizations request services, manage tickets, receive reports, and monitor cybersecurity posture in real-time.</p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/register" className="btn-primary">
-              Get Started <ArrowRight size={18} aria-hidden="true" />
-            </Link>
-            <Link to="/services" className="btn-secondary">
-              Explore Services
-            </Link>
-          </div>
-        </div>
-        
-        {/* Live SOC Card */}
-        <div className="glass-card p-7">
-          <div className="mb-5 flex items-center justify-between text-slate-300">
-            <span className="text-sm font-semibold">Live SOC Snapshot</span>
-            <span className="badge badge-success">ShieldOps</span>
-          </div>
-          <div className="grid place-items-center rounded-full bg-[conic-gradient(#00ff99_84%,rgba(255,255,255,0.1)_0)] p-8">
-            <div className="grid aspect-square w-56 place-items-center rounded-full bg-shield-navy">
-              <div className="text-center">
-                <strong className="block text-6xl font-black text-shield-glow">84</strong>
-                <span className="text-slate-400 text-sm font-semibold">Security Score</span>
+      <section className="mx-auto max-w-7xl px-6 py-16 lg:py-20">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] items-center">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm uppercase tracking-[0.35em] text-slate-300 shadow-glow/5">
+              <span className="h-2 w-2 rounded-full bg-shield-glow" />
+              NaijaShield Technologies
+            </div>
+
+            <div className="space-y-5">
+              <h1 className="max-w-3xl text-5xl font-black leading-tight tracking-[-0.04em] text-white md:text-6xl">Enterprise cybersecurity, optimized for African organisations.</h1>
+              <p className="max-w-2xl text-lg leading-8 text-slate-300">NaijaShield combines posture scoring, incident visibility, compliance readiness, and live SOC workflows in a modern portal built to protect, detect, and defend.</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow/10 backdrop-blur-xl">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Managed security</p>
+                <p className="mt-3 text-2xl font-black text-white">24/7 SOC visibility</p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-glow/10 backdrop-blur-xl">
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Compliance trust</p>
+                <p className="mt-3 text-2xl font-black text-shield-glow">Audit ready controls</p>
               </div>
             </div>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <Link to="/register" className="btn-primary">
+                Get Started <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <Link to="/services" className="btn-secondary">
+                Explore Services
+              </Link>
+              <span className="text-sm uppercase tracking-[0.35em] text-slate-400">Protect • Detect • Defend</span>
+            </div>
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            {[
-              { label: 'Open tickets', value: '12' },
-              { label: 'Reports', value: '38' },
-              { label: 'SLA', value: '99.9%' }
-            ].map(({ label, value }) => (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-colors" key={label}>
-                <strong className="block text-xl text-shield-glow">{value}</strong>
-                <span className="text-xs text-slate-400 font-semibold">{label}</span>
+
+          <div className="hero-illustration p-8">
+            <div className="relative z-10 grid gap-6 animate-fade-in">
+              <div className="rounded-[2rem] border border-white/10 bg-shield-navy/95 p-6 shadow-glow-lg animate-glow-pulse">
+                <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.35em] text-slate-400">Live security score</p>
+                    <p className="mt-2 text-5xl font-black text-shield-glow">{liveScore}%</p>
+                  </div>
+                  <div className="rounded-3xl bg-white/5 px-5 py-3 text-center">
+                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400">ShieldOps</p>
+                    <p className="mt-2 text-xl font-black text-white">SOC ready</p>
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <ScoreChart data={liveScores} />
+                </div>
               </div>
-            ))}
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: 'Assets monitored', value: '124' },
+                  { label: 'Remediation tasks', value: '18' },
+                  { label: 'Client interactions', value: '42' }
+                ].map(info => (
+                  <div key={info.label} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-400">{info.label}</p>
+                    <p className="mt-3 text-2xl font-black text-white">{info.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="absolute -right-8 bottom-0 h-[360px] w-[360px] rounded-full bg-shield-glow/10 blur-3xl" />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center animate-slide-in">
           <p className="text-sm font-black uppercase tracking-widest text-shield-glow">Platform features</p>
           <h2 className="mt-2 text-3xl md:text-4xl font-black">Everything clients and analysts need to work together.</h2>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {features.map(([title, copy, Icon]) => (
-            <article className="glass-card p-6 hover:shadow-lg hover:border-white/30 transition-all duration-200 group" key={title as string}>
-              <div className="mb-4 inline-block rounded-lg bg-shield-green/10 p-3 group-hover:bg-shield-green/20 transition-colors duration-200">
-                <Icon className="text-shield-glow" size={24} aria-hidden="true" />
+            <article className="glass-card p-6 hover:-translate-y-1 hover:shadow-glow-lg transition-all duration-200 group" key={title as string}>
+              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-shield-green/10 text-shield-glow transition-colors duration-200 group-hover:bg-shield-glow/15">
+                <Icon className="text-2xl" aria-hidden="true" />
               </div>
-              <h3 className="text-lg font-bold">{title as string}</h3>
+              <h3 className="text-lg font-black">{title as string}</h3>
               <p className="mt-3 text-sm text-slate-300 leading-relaxed">{copy as string}</p>
             </article>
           ))}

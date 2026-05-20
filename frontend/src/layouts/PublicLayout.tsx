@@ -27,9 +27,7 @@ export function PublicLayout() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-shield-navy/85 px-6 py-4 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
           <Link to="/" className="flex items-center gap-3 font-black text-shield-glow hover:opacity-80 transition-opacity" aria-label="NaijaShield Home">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-shield-green to-shield-glow text-shield-deep">
-              <Shield size={22} aria-hidden="true" />
-            </span>
+            <img src="/logo.svg" alt="NaijaShield logo" className="h-11 w-11 rounded-xl object-contain bg-white/5 p-2" />
             <span className="hidden sm:inline">NaijaShield</span>
           </Link>
 

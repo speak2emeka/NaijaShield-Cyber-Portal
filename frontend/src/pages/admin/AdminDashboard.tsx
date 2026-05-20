@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MetricCard } from '../../components/MetricCard';
 import { api } from '../../services/api';
-import { AlertCircle, Clock } from 'lucide-react';
+import { Activity, AlertCircle, Clock, Database, FlaskConical, ShieldAlert } from 'lucide-react';
 
 export function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -52,17 +52,109 @@ export function AdminDashboard() {
     );
   }
 
+  const systemHealthMetrics = [
+    { label: 'API latency', value: data.systemHealth?.apiLatencyMs ?? 0, max: 500 },
+    { label: 'Error rate', value: data.systemHealth?.errorRate ?? 0, max: 100 },
+    { label: 'Storage', value: data.systemHealth?.storageUsagePercent ?? 0, max: 100 }
+  ];
+
   return (
     <div className="grid gap-6">
-      <div>
-        <h1 className="text-2xl font-black mb-4">Admin Dashboard</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="glass-card p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <h1 className="text-2xl font-black">Admin Dashboard</h1>
+            <p className="mt-2 text-sm text-slate-400">Real-time operations, client health, and security trends for your SOC team.</p>
+          </div>
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
+            <span className="h-2 w-2 rounded-full bg-shield-glow" />
+            Live metrics refresh every 5 minutes
+          </div>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <MetricCard label="Total Clients" value={data.metrics.clients} />
           <MetricCard label="Active Subscriptions" value={data.metrics.subscriptions} />
           <MetricCard label="Open Tickets" value={data.metrics.openTickets} tone="red" />
           <MetricCard label="Pending Requests" value={data.metrics.pendingRequests} tone="gold" />
+          <MetricCard label="Trial Accounts" value={data.metrics.trialAccounts ?? 0} />
+          <MetricCard label="SLA Breaches" value={data.metrics.slaBreaches ?? 0} tone="red" />
+          <MetricCard label="Report Uploads" value={data.metrics.recentReportUploads ?? 0} />
         </div>
-      </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-3">
+        <section className="glass-card p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold"><ShieldAlert size={20} className="text-shield-glow" />Security Posture</h2>
+          <p className="text-4xl font-black text-shield-glow">{data.securityPosture?.averageScore ?? 0}</p>
+          <p className="mt-1 text-sm text-slate-400">Average client score</p>
+          <div className="mt-5 space-y-2 text-sm">
+            {(data.securityPosture?.highRiskClients || []).slice(0, 3).map((client: any) => (
+              <p key={client.id} className="flex justify-between gap-4">
+                <span>{client.clientCompany?.name || 'Unknown client'}</span>
+                <strong className="text-red-300">{client.score}</strong>
+              </p>
+            ))}
+          </div>
+        </section>
+
+        <section className="glass-card p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold"><Activity size={20} className="text-shield-glow" />Events Snapshot</h2>
+          <p className="text-4xl font-black text-shield-glow">{data.securityEvents?.last24h ?? 0}</p>
+          <p className="mt-1 text-sm text-slate-400">Events in the last 24h</p>
+          <div className="mt-5 grid gap-3 text-sm">
+            {(data.securityEvents?.severityDistribution || []).slice(0, 4).map((item: any) => (
+              <div key={item.severity} className="flex items-center justify-between gap-4 rounded-3xl bg-white/5 px-4 py-3">
+                <span>{item.severity}</span>
+                <strong>{item._count?.severity ?? 0}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="glass-card p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold"><FlaskConical size={20} className="text-shield-glow" />Attack Lab</h2>
+          <p className="text-4xl font-black text-shield-glow">{data.attackLab?.runs ?? 0}</p>
+          <p className="mt-1 text-sm text-slate-400">Product readiness runs</p>
+          <div className="mt-5 space-y-2 text-sm">
+            {(data.attackLab?.readinessScores || []).slice(0, 3).map((item: any) => (
+              <div key={item.client} className="flex justify-between gap-4 rounded-3xl bg-white/5 px-4 py-3">
+                <span>{item.client}</span>
+                <strong>{item.score}%</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      </section>
+
+      <section className="glass-card p-6">
+        <div className="mb-5 flex items-center gap-2">
+          <Database size={20} className="text-shield-glow" />
+          <h2 className="text-xl font-bold">System Health</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-5">
+          <MetricCard label="Database" value={data.systemHealth?.database ?? 'unknown'} />
+          <MetricCard label="Queue" value={data.systemHealth?.queue ?? 'unknown'} />
+          <MetricCard label="API Latency" value={`${data.systemHealth?.apiLatencyMs ?? 0}ms`} />
+          <MetricCard label="Error Rate" value={`${data.systemHealth?.errorRate ?? 0}%`} tone="red" />
+          <MetricCard label="Storage" value={`${data.systemHealth?.storageUsagePercent ?? 0}%`} />
+        </div>
+        <div className="mt-6 space-y-4">
+          {systemHealthMetrics.map(metric => {
+            const percent = metric.max > 0 ? Math.min(100, Math.round((metric.value / metric.max) * 100)) : 0;
+            return (
+              <div key={metric.label} className="space-y-2">
+                <div className="flex items-center justify-between text-sm text-slate-400">
+                  <span>{metric.label}</span>
+                  <strong className="text-white">{metric.value}</strong>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="sparkline-bar" style={{ width: `${percent}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="glass-card p-6">
         <div className="flex items-center gap-2 mb-5">

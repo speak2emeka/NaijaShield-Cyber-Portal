@@ -8,9 +8,10 @@ export async function auditLog(req: Request, action: string, entityType: string,
       action,
       entityType,
       entityId,
-      metadata,
+      metadata: metadata as never,
       ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
+      userAgent: req.headers['user-agent'],
+      correlationId: req.correlationId
     }
   });
 }

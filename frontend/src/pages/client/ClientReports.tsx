@@ -3,6 +3,7 @@ import { DataTable } from '../../components/DataTable';
 import { api } from '../../services/api';
 import { Report } from '../../types';
 import { Download, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function ClientReports() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -55,7 +56,7 @@ export function ClientReports() {
         <DataTable headers={['Report', 'Description', 'Date', 'Action']}>
           {reports.map(report => (
             <tr key={report.id} className="hover:bg-white/5 transition-colors">
-              <td className="px-6 py-4 font-bold">{report.title}</td>
+              <td className="px-6 py-4 font-bold"><Link className="text-shield-glow hover:underline" to={`/client/reports/${report.id}`}>{report.title}</Link></td>
               <td className="px-6 py-4 text-slate-300 text-sm">{report.description}</td>
               <td className="px-6 py-4 text-sm">{new Date(report.createdAt).toLocaleDateString()}</td>
               <td className="px-6 py-4">

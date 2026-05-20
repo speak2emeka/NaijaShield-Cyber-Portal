@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: naijashield
+          POSTGRES_PASSWORD: naijashield
+          POSTGRES_DB: naijashield
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U naijashield -d naijashield"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+      - name: Install backend
+        working-directory: backend
+        run: npm ci
+      - name: Validate Prisma
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://naijashield:naijashield@localhost:5432/naijashield?schema=public
+        run: npx prisma validate
+      - name: Run migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://naijashield:naijashield@localhost:5432/naijashield?schema=public
+        run: npx prisma migrate deploy
+      - name: Build backend
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://naijashield:naijashield@localhost:5432/naijashield?schema=public
+          JWT_ACCESS_SECRET: ci-access-secret-value-at-least-32-chars
+          JWT_REFRESH_SECRET: ci-refresh-secret-value-at-least-32-chars
+        run: npm run build
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build

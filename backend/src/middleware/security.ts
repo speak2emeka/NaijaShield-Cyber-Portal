@@ -8,8 +8,13 @@ import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 import { env, isProduction } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { metricsMiddleware } from './metrics.js';
+import { requestContext } from './request-context.js';
 
-export const requestLogger = pinoHttp({ logger });
+export const requestLogger = (pinoHttp as never as (options: unknown) => express.RequestHandler)({
+  logger,
+  genReqId: (req: express.Request) => req.headers['x-correlation-id']?.toString() || req.id
+});
 
 export const corsMiddleware = cors({
   origin: env.FRONTEND_ORIGIN,
@@ -40,6 +45,7 @@ export const csrfProtection = csrf({
 
 export function registerSecurityMiddleware(app: express.Express) {
   app.set('trust proxy', 1);
+  app.use(requestContext);
   app.use(helmet());
   app.use(corsMiddleware);
   app.use(compression());
@@ -47,5 +53,6 @@ export function registerSecurityMiddleware(app: express.Express) {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(globalRateLimit);
+  app.use(metricsMiddleware);
   app.use(requestLogger);
 }

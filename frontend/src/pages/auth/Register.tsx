@@ -17,7 +17,7 @@ export function Register() {
       await register(payload);
       toast.success('Account created successfully!');
       navigate('/client');
-    } catch (error) {
+    } catch {
       toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);

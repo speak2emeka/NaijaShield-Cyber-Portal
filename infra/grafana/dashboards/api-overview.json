@@ -1,0 +1,24 @@
+{
+  "title": "NaijaShield API Overview",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "title": "API latency p95",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(naijashield_http_request_duration_seconds_bucket[5m])) by (le, route))"
+        }
+      ]
+    },
+    {
+      "title": "API errors",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(naijashield_http_errors_total[5m])) by (route, status)"
+        }
+      ]
+    }
+  ]
+}

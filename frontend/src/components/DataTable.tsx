@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
 
 export function DataTable({ headers, children }: { headers: string[]; children: ReactNode }) {
   return (

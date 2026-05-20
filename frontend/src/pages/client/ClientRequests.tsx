@@ -51,7 +51,7 @@ export function ClientRequests() {
       toast.success('Service request created successfully');
       event.currentTarget.reset();
       await load();
-    } catch (error) {
+    } catch {
       toast.error('Failed to create request');
     } finally {
       setIsLoading(false);

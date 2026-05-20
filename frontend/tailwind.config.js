@@ -20,7 +20,9 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'fade-in': 'fadeIn 0.3s ease-in-out',
-        'slide-in': 'slideIn 0.3s ease-out'
+        'slide-in': 'slideIn 0.3s ease-out',
+        'draw-line': 'drawLine 1.2s ease forwards',
+        'glow-pulse': 'glowPulse 3s ease-in-out infinite'
       },
       keyframes: {
         fadeIn: {
@@ -30,6 +32,14 @@ export default {
         slideIn: {
           '0%': { transform: 'translateX(-10px)', opacity: '0' },
           '100%': { transform: 'translateX(0)', opacity: '1' }
+        },
+        drawLine: {
+          '0%': { strokeDashoffset: '400' },
+          '100%': { strokeDashoffset: '0' }
+        },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 30px rgba(0, 255, 153, 0.16)' },
+          '50%': { boxShadow: '0 0 45px rgba(0, 255, 153, 0.28)' }
         }
       },
       spacing: {

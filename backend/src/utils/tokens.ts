@@ -11,11 +11,11 @@ export type JwtUser = {
 };
 
 export function signAccessToken(payload: JwtUser) {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL });
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: env.ACCESS_TOKEN_TTL } as jwt.SignOptions);
 }
 
 export function signRefreshToken(payload: JwtUser) {
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d` });
+  return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d` } as jwt.SignOptions);
 }
 
 export function verifyAccessToken(token: string) {

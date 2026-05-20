@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
-import { Send, AlertCircle } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 export function Contact() {
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export function Contact() {
       event.currentTarget.reset();
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 3000);
-    } catch (error) {
+    } catch {
       toast.error('Unable to send message. Please try again.');
     } finally {
       setLoading(false);

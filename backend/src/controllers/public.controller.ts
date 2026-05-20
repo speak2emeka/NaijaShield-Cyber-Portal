@@ -19,12 +19,25 @@ export const publicController = {
   },
 
   async pricing(_req: Request, res: Response) {
-    res.json({
-      plans: [
-        { name: 'ShieldStart', audience: 'SMEs', price: 'Custom', features: ['Baseline assessment', 'Awareness training', 'Risk report'] },
-        { name: 'ShieldOps', audience: 'Growth teams', price: 'Custom', features: ['Managed monitoring', 'Tickets', 'Monthly reporting'] },
-        { name: 'ShieldEnterprise', audience: 'Regulated organizations', price: 'Custom', features: ['Dedicated analyst', 'Compliance support', 'Incident response'] }
-      ]
+    const plans = await prisma.plan.findMany({
+      where: { active: true },
+      include: { planFeatures: { include: { feature: true } } },
+      orderBy: { priceMonthly: 'asc' }
     });
+
+    res.json({ plans: plans.map(plan => ({
+      slug: plan.slug,
+      name: plan.name,
+      description: plan.description,
+      category: plan.category,
+      priceMonthly: plan.priceMonthly,
+      priceAnnual: plan.priceAnnual,
+      features: plan.planFeatures.map(pf => ({
+        code: pf.feature.code,
+        name: pf.feature.name,
+        description: pf.feature.description,
+        included: pf.included
+      }))
+    })) });
   }
 };
