@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
+import { useAuth } from './AuthContext';
 
 export interface Plan {
   id: string;
@@ -32,6 +33,7 @@ type PlanContextValue = ClientPlan;
 const PlanContext = createContext<PlanContextValue | undefined>(undefined);
 
 export function PlanProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,7 +76,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [user?.clientCompanyId, user?.id]);
 
   const value = useMemo(() => ({ plan, features, isLoading, error, refresh }), [plan, features, isLoading, error]);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
