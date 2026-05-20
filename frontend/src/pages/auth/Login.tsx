@@ -9,7 +9,7 @@ export function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const demoModeEnabled = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true';
+  const demoModeEnabled = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' || typeof window !== 'undefined' && window.location.hostname === 'localhost';
   const [email, setEmail] = useState(demoModeEnabled ? 'client@example.com' : '');
   const [password, setPassword] = useState(demoModeEnabled ? 'client123' : '');
 

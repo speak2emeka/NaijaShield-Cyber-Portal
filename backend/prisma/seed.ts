@@ -1,5 +1,5 @@
 import argon2 from 'argon2';
-import { AssetType, AttackDifficulty, ComplianceFramework, ComplianceItemStatus, PrismaClient, RiskLevel, SecuritySeverity, ServiceRequestStatus, ServiceRequestType, SubscriptionStatus, TicketPriority, TicketStatus, UserRole } from '@prisma/client';
+import { AssetType, AttackDifficulty, ComplianceFramework, ComplianceItemStatus, Prisma, PrismaClient, RiskLevel, SecuritySeverity, ServiceRequestStatus, ServiceRequestType, SubscriptionStatus, TicketPriority, TicketStatus, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -153,6 +153,85 @@ async function main() {
     where: { id: company.id },
     data: { productPlanId: shieldOps.id }
   });
+
+  const tierTestClients = [
+    {
+      companyId: 'company-start',
+      companyName: 'Kano Retail Cooperative',
+      industry: 'Retail',
+      size: '25-50',
+      contactEmail: 'security@kanoretail.test',
+      userName: 'ShieldStart Client',
+      email: 'start-client@naijashield.test',
+      plan: shieldStart,
+      planName: 'ShieldStart'
+    },
+    {
+      companyId: 'company-ops',
+      companyName: 'Lagos Fintech Group',
+      industry: 'Financial Services',
+      size: '250-500',
+      contactEmail: 'security@lagosfintech.test',
+      userName: 'ShieldOps Client',
+      email: 'ops-client@naijashield.test',
+      plan: shieldOps,
+      planName: 'ShieldOps'
+    },
+    {
+      companyId: 'company-enterprise',
+      companyName: 'Abuja Health Network',
+      industry: 'Healthcare',
+      size: '1000+',
+      contactEmail: 'security@abujahealth.test',
+      userName: 'ShieldEnterprise Client',
+      email: 'enterprise-client@naijashield.test',
+      plan: shieldEnterprise,
+      planName: 'ShieldEnterprise'
+    }
+  ];
+
+  for (const tierClient of tierTestClients) {
+    const tierCompany = await prisma.clientCompany.upsert({
+      where: { id: tierClient.companyId },
+      update: { productPlanId: tierClient.plan.id },
+      create: {
+        id: tierClient.companyId,
+        name: tierClient.companyName,
+        industry: tierClient.industry,
+        size: tierClient.size,
+        contactEmail: tierClient.contactEmail,
+        productPlanId: tierClient.plan.id,
+        tenantKeyId: `kms-${tierClient.companyId}-v1`,
+        keyRotationDueAt: new Date('2026-12-31')
+      }
+    });
+
+    await prisma.user.upsert({
+      where: { email: tierClient.email },
+      update: { clientCompanyId: tierCompany.id, role: UserRole.CLIENT },
+      create: {
+        name: tierClient.userName,
+        email: tierClient.email,
+        passwordHash: clientHash,
+        role: UserRole.CLIENT,
+        clientCompanyId: tierCompany.id
+      }
+    });
+
+    await prisma.subscription.upsert({
+      where: { clientCompanyId: tierCompany.id },
+      update: { planId: tierClient.plan.id, plan: tierClient.planName, status: SubscriptionStatus.ACTIVE },
+      create: {
+        clientCompanyId: tierCompany.id,
+        plan: tierClient.planName,
+        planId: tierClient.plan.id,
+        status: SubscriptionStatus.ACTIVE,
+        startDate: new Date('2026-01-01'),
+        renewalDate: new Date('2026-12-31'),
+        featureFlags: (tierClient.plan.featureFlags || {}) as Prisma.InputJsonValue
+      }
+    });
+  }
 
   // Seed FeatureFlag definitions and tenant-specific overrides
   const featureFlagDefinitions = [

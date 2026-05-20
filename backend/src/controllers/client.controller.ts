@@ -127,6 +127,25 @@ export const clientController = {
     res.json(await prisma.securityScoreHistory.findMany({ where: { clientCompanyId: companyId(req) }, orderBy: { calculatedAt: 'asc' } }));
   },
 
+  async plan(req: Request, res: Response) {
+    const clientCompanyId = companyId(req);
+    const [company, subscription] = await Promise.all([
+      prisma.clientCompany.findUnique({ where: { id: clientCompanyId }, include: { productPlan: { include: { planFeatures: { include: { feature: true } } } } } }),
+      prisma.subscription.findUnique({ where: { clientCompanyId }, include: { planRef: { include: { planFeatures: { include: { feature: true } } } } } })
+    ]);
+    const plan = company?.productPlan || subscription?.planRef || null;
+    const featureFlags = (subscription?.featureFlags || {}) as Record<string, boolean>;
+    const features = plan?.planFeatures.map(planFeature => ({
+      id: planFeature.feature.id,
+      code: planFeature.feature.code,
+      name: planFeature.feature.name,
+      description: planFeature.feature.description,
+      included: planFeature.included || Boolean(featureFlags[planFeature.feature.code])
+    })) || [];
+
+    res.json({ plan, features });
+  },
+
   async subscription(req: Request, res: Response) {
     res.json(await prisma.subscription.findUnique({ where: { clientCompanyId: companyId(req) }, include: { planRef: true, invoices: { orderBy: { createdAt: 'desc' } } } }));
   },

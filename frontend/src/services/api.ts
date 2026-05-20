@@ -7,7 +7,10 @@ export const api = axios.create({
   timeout: 1500
 });
 
-const demoModeEnabled = import.meta.env.VITE_ENABLE_DEMO_MODE === 'true';
+function isDemoModeEnabled() {
+  return import.meta.env.VITE_ENABLE_DEMO_MODE === 'true' || Boolean(localStorage.getItem('ns_demo_user'));
+}
+
 let accessToken: string | null = localStorage.getItem('ns_access_token');
 
 export function setAccessToken(token: string | null) {
@@ -31,6 +34,14 @@ const demoUsers: Record<string, User & { password: string }> = {
     name: 'NaijaShield Admin',
     role: 'ADMIN'
   },
+  'start-client@naijashield.test': {
+    id: 'demo-client-start',
+    email: 'start-client@naijashield.test',
+    password: 'client123',
+    name: 'ShieldStart Client',
+    role: 'CLIENT',
+    clientCompanyId: 'company-start'
+  },
   'client@example.com': {
     id: 'demo-client',
     email: 'client@example.com',
@@ -38,6 +49,22 @@ const demoUsers: Record<string, User & { password: string }> = {
     name: 'Demo Client',
     role: 'CLIENT',
     clientCompanyId: 'demo-company'
+  },
+  'ops-client@naijashield.test': {
+    id: 'demo-client-ops',
+    email: 'ops-client@naijashield.test',
+    password: 'client123',
+    name: 'ShieldOps Client',
+    role: 'CLIENT',
+    clientCompanyId: 'company-ops'
+  },
+  'enterprise-client@naijashield.test': {
+    id: 'demo-client-enterprise',
+    email: 'enterprise-client@naijashield.test',
+    password: 'client123',
+    name: 'ShieldEnterprise Client',
+    role: 'CLIENT',
+    clientCompanyId: 'company-enterprise'
   }
 };
 
@@ -119,6 +146,81 @@ const demoCompany = {
     paymentHistory: [{ amount: 250000, currency: 'NGN', date: '2026-05-01', status: 'paid' }]
   }
 };
+
+const demoTierCompanies: Record<string, any> = {
+  'company-start': {
+    id: 'company-start',
+    name: 'Kano Retail Cooperative',
+    industry: 'Retail',
+    size: '25-50',
+    contactEmail: 'security@kanoretail.test',
+    users: [{ ...demoUsers['start-client@naijashield.test'], password: undefined }],
+    subscription: { plan: 'ShieldStart', status: 'ACTIVE', startDate: '2026-01-01T00:00:00.000Z', renewalDate: '2026-12-31T00:00:00.000Z', paymentHistory: [] }
+  },
+  'demo-company': demoCompany,
+  'company-ops': {
+    ...demoCompany,
+    id: 'company-ops',
+    name: 'Lagos Fintech Group',
+    contactEmail: 'security@lagosfintech.test',
+    users: [{ ...demoUsers['ops-client@naijashield.test'], password: undefined }]
+  },
+  'company-enterprise': {
+    id: 'company-enterprise',
+    name: 'Abuja Health Network',
+    industry: 'Healthcare',
+    size: '1000+',
+    contactEmail: 'security@abujahealth.test',
+    users: [{ ...demoUsers['enterprise-client@naijashield.test'], password: undefined }],
+    subscription: { plan: 'ShieldEnterprise', status: 'ACTIVE', startDate: '2026-01-01T00:00:00.000Z', renewalDate: '2026-12-31T00:00:00.000Z', paymentHistory: [] }
+  }
+};
+
+const demoTierPlans: Record<string, any> = {
+  'company-start': {
+    plan: { id: 'plan-start', slug: 'shield-start', name: 'ShieldStart', priceMonthly: 120000, currency: 'NGN', description: 'Baseline portal, tickets, reports, and posture visibility.' },
+    features: [
+      { id: 'f1', code: 'SECURITY_POSTURE', name: 'Security Posture', description: 'Security score and posture tracking', included: true },
+      { id: 'f2', code: 'SECURITY_EVENTS', name: 'Security Events', description: 'Mini-SIEM event monitoring', included: false },
+      { id: 'f3', code: 'ATTACK_LAB', name: 'Attack Lab', description: 'Synthetic readiness exercises', included: false },
+      { id: 'f4', code: 'EXTERNAL_SECURITY', name: 'External Security', description: 'OSINT and scanner orchestration', included: false },
+      { id: 'f5', code: 'COMPLIANCE_MANAGEMENT', name: 'Compliance Management', description: 'Framework checklists and evidence', included: false }
+    ]
+  },
+  'demo-company': {
+    plan: { id: 'plan-ops', slug: 'shield-ops', name: 'ShieldOps', priceMonthly: 350000, currency: 'NGN', description: 'Managed operations with events, attack lab, and external security.' },
+    features: [
+      { id: 'f1', code: 'SECURITY_POSTURE', name: 'Security Posture', description: 'Security score and posture tracking', included: true },
+      { id: 'f2', code: 'SECURITY_EVENTS', name: 'Security Events', description: 'Mini-SIEM event monitoring', included: true },
+      { id: 'f3', code: 'ATTACK_LAB', name: 'Attack Lab', description: 'Synthetic readiness exercises', included: true },
+      { id: 'f4', code: 'EXTERNAL_SECURITY', name: 'External Security', description: 'OSINT and scanner orchestration', included: true },
+      { id: 'f5', code: 'COMPLIANCE_MANAGEMENT', name: 'Compliance Management', description: 'Framework checklists and evidence', included: false }
+    ]
+  },
+  'company-ops': undefined,
+  'company-enterprise': {
+    plan: { id: 'plan-enterprise', slug: 'shield-enterprise', name: 'ShieldEnterprise', priceMonthly: 900000, currency: 'NGN', description: 'Full SOC, compliance, external security, and enterprise workflows.' },
+    features: [
+      { id: 'f1', code: 'SECURITY_POSTURE', name: 'Security Posture', description: 'Security score and posture tracking', included: true },
+      { id: 'f2', code: 'SECURITY_EVENTS', name: 'Security Events', description: 'Mini-SIEM event monitoring', included: true },
+      { id: 'f3', code: 'ATTACK_LAB', name: 'Attack Lab', description: 'Synthetic readiness exercises', included: true },
+      { id: 'f4', code: 'EXTERNAL_SECURITY', name: 'External Security', description: 'OSINT and scanner orchestration', included: true },
+      { id: 'f5', code: 'COMPLIANCE_MANAGEMENT', name: 'Compliance Management', description: 'Framework checklists and evidence', included: true }
+    ]
+  }
+};
+
+demoTierPlans['company-ops'] = demoTierPlans['demo-company'];
+
+function currentDemoCompany() {
+  const user = demoSessionUser();
+  return demoTierCompanies[user?.clientCompanyId || 'demo-company'] || demoCompany;
+}
+
+function currentDemoPlan() {
+  const company = currentDemoCompany();
+  return demoTierPlans[company.id] || demoTierPlans['demo-company'];
+}
 
 const demoNotifications = [
   { id: 'note-1', type: 'ALERT', message: 'High-priority ticket opened for endpoint exposure review.', read: false, createdAt: now },
@@ -279,9 +381,24 @@ function demoResponse(config: any, data: unknown, status = 200) {
   };
 }
 
+function normalizeDemoUrl(config: any) {
+  let url = String(config.url || '');
+  try {
+    const base = String(config.baseURL || window.location.origin);
+    const parsed = new URL(url, base);
+    url = parsed.pathname + parsed.search;
+  } catch {
+    url = url.replace(/^https?:\/\/[^/]+/, '');
+  }
+  if (url.startsWith('/api')) {
+    url = url.slice(4);
+  }
+  return url.split('?')[0];
+}
+
 function handleDemoRequest(config: any) {
   const method = (config.method || 'get').toLowerCase();
-  const url = String(config.url || '').replace(/^\/api/, '').split('?')[0];
+  const url = normalizeDemoUrl(config);
   const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data || {};
 
   if (method === 'post' && url === '/auth/login') {
@@ -315,7 +432,7 @@ function handleDemoRequest(config: any) {
   if (method === 'get' && url === '/enterprise/billing/plans') return demoResponse(config, demoPlans);
   if (method === 'post' && (url === '/enterprise/billing/checkout' || url === '/billing/checkout')) return demoResponse(config, { provider: body.provider || 'STRIPE', checkoutUrl: `${location.origin}/client/billing?demoCheckout=${body.planId}` });
   if (method === 'get' && url === '/enterprise/billing/invoices') return demoResponse(config, [{ id: 'invoice-1', amount: 250000, currency: 'NGN', status: 'PAID', createdAt: now }]);
-  if (method === 'get' && url === '/billing/client/subscription') return demoResponse(config, demoSubscriptions[0]);
+  if (method === 'get' && url === '/billing/client/subscription') return demoResponse(config, { ...demoSubscriptions[0], plan: currentDemoPlan().plan.slug.replace('shield-', ''), clientCompany: { name: currentDemoCompany().name } });
   if (method === 'get' && url === '/billing/admin/subscriptions') return demoResponse(config, demoSubscriptions);
   if (method === 'patch' && url.includes('/billing/admin/subscriptions/')) return demoResponse(config, { ...demoSubscriptions[0], ...body });
   if (method === 'post' && url.includes('/billing/admin/invoices/') && url.endsWith('/retry')) return demoResponse(config, { ok: true });
@@ -342,6 +459,155 @@ function handleDemoRequest(config: any) {
   if (method === 'get' && url === '/security-platform/client/compliance') return demoResponse(config, demoCompliance);
   if (method === 'post' && url.includes('/security-platform/client/compliance/') && url.endsWith('/evidence')) return demoResponse(config, { id: crypto.randomUUID(), title: body.title, createdAt: now }, 201);
   if (method === 'get' && url === '/security-platform/client/tenant-key') return demoResponse(config, { tenantKeyId: 'kms-demo-acme-finance-v1', rotationDueAt: '2026-11-16T00:00:00.000Z', provider: 'stub-kms' });
+
+  const demoAttackLabScenarios = [
+    {
+      id: 'scenario-phishing-001',
+      title: 'Executive Impersonation Email',
+      description: 'Receive an urgent email requesting a wire transfer from the CEO.',
+      type: 'PHISHING',
+      difficulty: 'EASY',
+      duration: 6,
+      category: 'Business Email Compromise',
+      objectives: ['Identify the spoofed sender', 'Verify requests through a separate channel', 'Report the email to security'],
+      successCriteria: {
+        correctResponse: 'Do not comply and report the email as phishing',
+        timeLimit: 300,
+        acceptableVariations: ['Delete and report the email', 'Forward to security team', 'Flag as phishing and notify IT']
+      },
+      scoring: {
+        maxPoints: 100,
+        factors: [
+          { name: 'Detection', weight: 40, description: 'Recognized phishing indicators' },
+          { name: 'Response', weight: 40, description: 'Reported the incident correctly' },
+          { name: 'Credential Protection', weight: 20, description: 'Did not enter any credentials' }
+        ]
+      }
+    },
+    {
+      id: 'scenario-package-001',
+      title: 'Package Delivery Scam',
+      description: 'Unexpected delivery notification asks you to confirm account details.',
+      type: 'PHISHING',
+      difficulty: 'MEDIUM',
+      duration: 8,
+      category: 'Supply Chain',
+      objectives: ['Check the sender domain', 'Avoid clicking suspicious links', 'Validate with the sender directly'],
+      successCriteria: {
+        correctResponse: 'Recognize the scam and do not click the link',
+        timeLimit: 480
+      },
+      scoring: {
+        maxPoints: 100,
+        factors: [
+          { name: 'Link Avoidance', weight: 50, description: 'Did not click the malicious link' },
+          { name: 'Reporting', weight: 30, description: 'Escalated the suspicious email' },
+          { name: 'Verification', weight: 20, description: 'Checked sender authenticity' }
+        ]
+      }
+    }
+  ];
+
+  const demoAttackLabDrill = {
+    id: 'drill-1',
+    kind: 'phishing',
+    safetyNote: 'This drill is safe and designed to help you practice identifying phishing emails without any offensive action.',
+    steps: [
+      {
+        prompt: 'You receive an email requesting urgent credentials to complete a vendor payment. What do you do?',
+        options: [
+          'Enter credentials and proceed',
+          'Ignore the email',
+          'Verify the request via a separate channel',
+          'Forward it to the security team'
+        ]
+      },
+      {
+        prompt: 'The sender address looks slightly different from the vendor you know. What is your immediate action?',
+        options: [
+          'Reply asking for clarification',
+          'Click the link to confirm the invoice',
+          'Mark the email as phishing',
+          'Call the sender using the phone number in the email'
+        ]
+      }
+    ]
+  };
+
+  const demoAttackLabRuns = [
+    {
+      id: 'run-1',
+      scenario: demoAttackLabScenarios[0],
+      startedAt: now,
+      resultSummary: {
+        outcome: 'Mitigated',
+        readinessScore: 88,
+        detectedPhase: 'Email Gateway',
+        recommendations: ['Report suspicious emails immediately', 'Verify all wire transfer requests by phone', 'Use MFA for finance applications']
+      },
+      events: [
+        {
+          id: 'event-1',
+          phase: 'Initial Detection',
+          severity: 'MEDIUM',
+          timestamp: now,
+          description: 'User flagged the phishing email and reported it to security.',
+          metadata: {
+            detectionSignal: 'user-report',
+            defensiveSignal: 'email-quarantine'
+          }
+        }
+      ],
+      attackerView: {
+        narrative: 'A threat actor impersonated leadership to request a fraudulent payment.',
+        tactics: ['Business Email Compromise', 'Urgency', 'Credential Harvesting']
+      },
+      defenderView: {
+        narrative: 'The security team identified the suspicious origin and stopped the transfer before any credentials were exposed.'
+      }
+    }
+  ];
+
+  if (method === 'get' && (url === '/security-platform/client/attack-lab/scenarios' || url === '/client/attack-lab/scenarios')) return demoResponse(config, demoAttackLabScenarios);
+  if (method === 'get' && (url === '/security-platform/client/attack-lab/runs' || url === '/client/attack-lab/runs')) return demoResponse(config, demoAttackLabRuns);
+  if (method === 'get' && url === '/security-platform/client/attack-lab/drill') return demoResponse(config, demoAttackLabDrill);
+  if (method === 'post' && (url === '/security-platform/client/attack-lab/runs' || url === '/client/attack-lab/runs')) {
+    const run = {
+      id: crypto.randomUUID(),
+      scenario: demoAttackLabScenarios[0],
+      startedAt: new Date().toISOString(),
+      resultSummary: {
+        outcome: 'In progress',
+        readinessScore: 0,
+        detectedPhase: 'Pending',
+        recommendations: []
+      },
+      events: [],
+      attackerView: { narrative: 'Scenario queued for a controlled readiness exercise.', tactics: [] },
+      defenderView: { narrative: 'Detection and response timeline will appear as the exercise progresses.' }
+    };
+    demoAttackLabRuns.unshift(run);
+    return demoResponse(config, run, 201);
+  }
+  if (method === 'post' && (url === '/security-platform/client/attack-lab/drill/score' || url === '/client/attack-lab/drill/score')) {
+    return demoResponse(config, {
+      readinessScore: 92,
+      recommendations: ['Report the suspicious email', 'Use two-factor authentication', 'Review the phishing awareness guidance'],
+      details: demoAttackLabDrill.steps.map((step: any, index: number) => ({
+        prompt: step.prompt,
+        selected: typeof body.answers?.[index] === 'number' ? body.answers[index] : -1,
+        correct: true,
+        explanation: 'You handled this step correctly and protected the organization.',
+        feedback: 'Well done'
+      }))
+    });
+  }
+  if (method === 'get' && url.startsWith('/security-platform/client/attack-lab/runs/') || method === 'get' && url.startsWith('/client/attack-lab/runs/')) {
+    const runId = url.split('/').pop();
+    const run = demoAttackLabRuns.find(item => item.id === runId) || demoAttackLabRuns[0];
+    return demoResponse(config, run);
+  }
+
   if (method === 'get' && (url === '/security-platform/admin/security-events' || url.startsWith('/admin/security-events'))) return demoResponse(config, { items: demoSecurityEvents, analytics: { severityDistribution: [{ severity: 'LOW', _count: { severity: 2 } }, { severity: 'MEDIUM', _count: { severity: 1 } }], topTypes: [{ type: 'NEW_DEVICE_LOGIN', _count: { type: 1 } }], correlations: { 'deviceFingerprint:demo-browser': 2 } } });
   if (method === 'post' && url === '/admin/ai/threat-model') return demoResponse(config, demoAiThreatModel);
   if (method === 'post' && url === '/admin/ai/attack-surface/analyze') return demoResponse(config, demoAiAttackSurface);
@@ -408,6 +674,8 @@ function handleDemoRequest(config: any) {
   if (method === 'post' && url === '/client/meetings') { const meeting = { id: crypto.randomUUID(), ...body, createdAt: now, clientCompany: { name: 'Lagos Fintech Group' } }; demoMeetings.unshift(meeting); return demoResponse(config, meeting, 201); }
 
   if (method === 'get' && url === '/client/dashboard') {
+    const company = currentDemoCompany();
+    const plan = currentDemoPlan().plan;
     return demoResponse(config, {
       metrics: { securityScore: 84, openTickets: 2, activeRequests: 2, reports: 2 },
       scores: [
@@ -419,8 +687,8 @@ function handleDemoRequest(config: any) {
       tickets: demoTickets,
       requests: demoRequests,
       reports: demoReports,
-      subscription: demoCompany.subscription,
-      company: demoCompany
+      subscription: { ...company.subscription, plan: plan.name },
+      company
     });
   }
 
@@ -437,8 +705,9 @@ function handleDemoRequest(config: any) {
       { id: 'score-3', score: 84, calculatedAt: '2026-04-15T00:00:00.000Z', notes: 'Incident playbook completed.' }
     ]);
   }
-  if (method === 'get' && url === '/client/subscription') return demoResponse(config, demoCompany.subscription);
-  if (method === 'get' && url === '/client/company') return demoResponse(config, demoCompany);
+  if (method === 'get' && url === '/client/plan') return demoResponse(config, currentDemoPlan());
+  if (method === 'get' && url === '/client/subscription') return demoResponse(config, currentDemoCompany().subscription);
+  if (method === 'get' && url === '/client/company') return demoResponse(config, currentDemoCompany());
   if (method === 'get' && url === '/client/notifications') return demoResponse(config, demoNotifications);
   if (method === 'get' && url === '/client/audit-logs') return demoResponse(config, demoAuditLogs);
   if (method === 'get' && url === '/client/knowledge-base') return demoResponse(config, demoKnowledgeBase);
@@ -497,7 +766,10 @@ function handleDemoRequest(config: any) {
 
   if (method === 'get' && url === '/admin/clients') {
     return demoResponse(config, [
+      demoTierCompanies['company-start'],
       { ...demoCompany, id: 'company-1' },
+      demoTierCompanies['company-ops'],
+      demoTierCompanies['company-enterprise'],
       { id: 'company-2', name: 'Abuja Health Network', industry: 'Healthcare', users: [], subscription: { plan: 'ShieldEnterprise' } }
     ]);
   }
@@ -538,7 +810,7 @@ api.interceptors.response.use(
   },
   async error => {
     const original = error.config;
-    if (demoModeEnabled && !error.response) {
+    if (isDemoModeEnabled()) {
       const demo = handleDemoRequest(original);
       if (demo) return demo;
     }

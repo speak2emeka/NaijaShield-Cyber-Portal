@@ -20,6 +20,7 @@ clientRoutes.post('/tickets/:id/comment', validate(ticketSchemas.comment), clien
 clientRoutes.get('/requests', clientController.requests);
 clientRoutes.post('/requests', validate(requestSchemas.create), clientController.createRequest);
 clientRoutes.get('/security-score/history', clientController.scoreHistory);
+clientRoutes.get('/plan', clientController.plan);
 clientRoutes.get('/subscription', clientController.subscription);
 clientRoutes.get('/notifications', clientController.notifications);
 clientRoutes.get('/audit-logs', clientController.auditLogs);
